@@ -1,0 +1,63 @@
+[project]
+name = "CCIPyUtils"
+version = "0.1.0"
+description = "A collection of Python utilities developed by CCI Gothenburg University."
+readme = "README.md"
+authors = [
+  {name = "CCI Gothenburg University", email = "cci@gu.se"}
+]
+maintainers = [
+  {name = "CCI Gothenburg University", email = "cci@gu.se"}
+]
+classifiers = [
+    # TODO
+]
+license = {text = "MIT"}
+dependencies = [
+  "typer",
+  "https://github.com/glencoesoftware/zeroc-ice-py-rhel9-x86_64/releases/download/20230830/zeroc_ice-3.6.5-cp39-cp39-linux_x86_64.whl; platform_machine=='x86_64' and sys_platform=='linux' and python_version=='3.9'",
+  "https://github.com/glencoesoftware/zeroc-ice-py-win-x86_64/releases/download/20240325/zeroc_ice-3.6.5-cp39-cp39-win_amd64.whl ; platform_system=='Windows' and platform_machine=='AMD64' and python_version=='3.9'",
+  "https://github.com/glencoesoftware/zeroc-ice-py-macos-x86_64/releases/download/20231130/zeroc_ice-3.6.5-cp39-cp39-macosx_11_0_x86_64.whl ; sys_platform=='darwin' and platform_machine=='x86_64' and python_version=='3.9'",
+  "zeroc-ice==3.6.5 ; not (platform_machine=='x86_64')",  #fallback for other architectures
+  "omero-py==5.19.6"
+
+]
+requires-python = "== 3.9"
+
+[project.optional-dependencies]
+test = [
+    "coverage",  # testing
+    "pytest",  # testing
+    "ruff",  # linting
+    "ty", # checking types
+    "ipdb", # debugging
+]
+
+[project.urls]
+#bugs = "https://github.com/xfolka/CCIPy/issues"
+#changelog = "https://github.com/xfolka/CCIOmeroConnection/blob/master/changelog.md"
+homepage = "https://github.com/CCI-GU-Sweden/CCIPyUtils"
+
+[project.scripts]
+#CCIOmeroConnection = "CCIPyUtils.cli:app"
+
+[tool.ty]
+# All rules are enabled as "error" by default; no need to specify unless overriding.
+# Example override: relax a rule for the entire project (uncomment if needed).
+# rules.TY015 = "warn"  # For invalid-argument-type, warn instead of error.
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+
+[tool.uv]
+package = true
