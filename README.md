@@ -5,9 +5,7 @@
 
 A python wrapper for the omero blitz connection, used at CCI in GU
 
-* PyPI package: https://pypi.org/project/CCIOmeroConnection/
 * Free software: MIT License
-* Documentation: https://CCIOmeroConnection.readthedocs.io.
 
 ## Features
 
