@@ -1,14 +1,16 @@
-from threading import Lock
-from datetime import datetime
-from typing import Optional
 import traceback
+from datetime import datetime
+from threading import Lock
+from typing import Optional
+
 import omero
 import omero.rtypes
 from omero.gateway import BlitzGateway, DatasetWrapper
-from omerofrontend import conf
-from omerofrontend import logger
+from CCILogger import CCILogger
+#from omerofrontend import conf, logger
 
-class OmeroConnection:
+
+class CCIOmeroConnection:
     
     _mutex = Lock()
     
@@ -26,18 +28,18 @@ class OmeroConnection:
         return self.conn
     
     def _connect_to_omero(self, hostname, port, token):
-        logger.info(f"Opening connection to OMERO with token: {token}, hostname: {hostname}")    
+        CCILogger.info(f"Opening connection to OMERO with token: {token}, hostname: {hostname}")    
         self.omero_token = token
 
         self.conn = BlitzGateway(host=hostname, port=port)
         is_connected = self.conn.connect(token)
     
         if not is_connected:
-            logger.warning(f"Failed to connect to OMERO with token: {token}")
+            CCILogger.warning(f"Failed to connect to OMERO with token: {token}")
             raise ConnectionError("Failed to connect to OMERO")
 
     def _close_omero_connection(self,hardClose=False):
-        logger.info(f"Closing connection to OMERO with token: {self.omero_token}") if self.omero_token is not None else logger.info("Closing connection to OMERO without token")
+        CCILogger.info(f"Closing connection to OMERO with token: {self.omero_token}") if self.omero_token is not None else CCILogger.info("Closing connection to OMERO without token")
         if self.conn:
             self.conn.close(hard=hardClose)
 
@@ -52,7 +54,7 @@ class OmeroConnection:
     def get_or_create_project(self, project_name) -> int:
         
         with self._mutex:
-            logger.debug(f"Setting or grabbing the Project {self.conn}")
+            CCILogger.debug(f"Setting or grabbing the Project {self.conn}")
 
             # Try to get the project
             project = self.get_user_project_if_it_exists(project_name)
@@ -61,14 +63,13 @@ class OmeroConnection:
                 p = omero.model.ProjectI() #type: ignore
                 p.setName(omero.rtypes.rstring(project_name))
                 project = self.conn.getUpdateService().saveAndReturnObject(p)
-                logger.info(f"Created new project - ID: {project.getId().getValue()}, Name: {project_name}")
+                CCILogger.info(f"Created new project - ID: {project.getId().getValue()}, Name: {project_name}")
                 project_id = project.getId().getValue()
             else:
                 project_id = project.getId()
 
             return project_id
             
-
     def get_user(self):
         return self.conn.getUser()
 
@@ -84,7 +85,7 @@ class OmeroConnection:
         projects = []
         user = self.conn.getUser()
         if user is None:
-            logger.warning("No user is currently logged in.")
+            CCILogger.warning("No user is currently logged in.")
             return projects
         my_expId = user.getId()
         for p in self.conn.listProjects(my_expId):         # Initially we just load Projects
@@ -96,7 +97,7 @@ class OmeroConnection:
         projects = []
         user = self.conn.getUser()
         if user is None:
-            logger.warning("No user is currently logged in.")
+            CCILogger.warning("No user is currently logged in.")
             return projects
         my_expId = user.getId()
         for p in self.conn.listProjects(my_expId):         # Initially we just load Projects
@@ -117,8 +118,7 @@ class OmeroConnection:
             raise Exception(f"dataset with id {dataset_id} does not exist")
         
         return dataset.getName()
-
-        
+    
     def get_dataset_for_projects(self, project_id):
         project = self.conn.getObject("Project", project_id)
         if not project:
@@ -153,7 +153,7 @@ class OmeroConnection:
 
             if len(data) > 0:
                 dataset_id = data[0].getId()
-                logger.debug(f"Dataset '{dataset_name}' already exists in project. Using existing dataset.")
+                CCILogger.debug(f"Dataset '{dataset_name}' already exists in project. Using existing dataset.")
             else:
                 # Dataset doesn't exist, create it
                 dataset = omero.model.DatasetI()
@@ -167,7 +167,7 @@ class OmeroConnection:
                 link.setChild(dataset)
                 self.conn.getUpdateService().saveObject(link)
                 dataset_id = dataset_id.getValue()
-                logger.info(f"Created new dataset '{dataset_name}' with ID {dataset_id} and linked to project.")
+                CCILogger.info(f"Created new dataset '{dataset_name}' with ID {dataset_id} and linked to project.")
             
         return dataset_id
 
@@ -180,7 +180,7 @@ class OmeroConnection:
     def check_duplicate_file(self, filename: str, datasetId: int):
         dataset = self.get_dataset(datasetId)
         if not dataset:
-            logger.warning(f"Dataset with ID {datasetId} not found")
+            CCILogger.warning(f"Dataset with ID {datasetId} not found")
             return False, None
         
         for child in dataset.listChildren():
@@ -189,22 +189,22 @@ class OmeroConnection:
 
         return False, None
 
-    def compareImageAcquisitionTime(self,imageId, compareDate, fmtStr="%H-%M-%S") -> bool:
+    def compareImageAcquisitionTime(self, imageId, compareDate, fmtStr="%H-%M-%S", dateTimeFmt="%Y-%m-%d %H:%M:%S") -> bool:
         image = self.getImage(imageId)
         if not image:
-            logger.warning(f"Image with ID {imageId} not found")
+            CCILogger.warning(f"Image with ID {imageId} not found")
             return False
         acq_time_obj = image.getAcquisitionDate()
         if not acq_time_obj:
-            acq_time_str = self.getMapAnnotationValue(imageId,"Acquisition date")
+            acq_time_str = self.getMapAnnotationValue(imageId, "Acquisition date")
             if acq_time_str:
-                acq_time_obj = datetime.strptime(acq_time_str,conf.DATE_TIME_FMT)
+                acq_time_obj = datetime.strptime(acq_time_str, dateTimeFmt)
             else:
-                logger.warning(f"No acquisition date stored in image id {imageId}")
-                return False        
+                CCILogger.warning(f"No acquisition date stored in image id {imageId}")
+                return False
         
         check_time = compareDate.strftime(fmtStr)
-        acq_time = acq_time_obj.strftime(fmtStr)        
+        acq_time = acq_time_obj.strftime(fmtStr)
         return check_time == acq_time
 
     def get_tags_by_key(self, key):
@@ -218,9 +218,11 @@ class OmeroConnection:
             List of tag values.
         """
         tags = []
-        for tag in self.conn.getObjects("TagAnnotation"): #grab all tag
+        #grab all tags
+        for tag in self.conn.getObjects("TagAnnotation"):
             tags.append(tag.getValue())
-        tags = [x.replace(key,'') for x in tags if x.startswith(key+' ')] #filter it
+        #filter it by key
+        tags = [x.replace(key, '') for x in tags if x.startswith(key + ' ')]
 
         return tags
 
@@ -255,13 +257,13 @@ class OmeroConnection:
         for comment_ann in self.get_comment_annotations():
             try:
                 if not isinstance(comment_ann, omero.gateway.CommentAnnotationWrapper):
-                    logger.warning(f"Annotation {comment_ann.getId()} is not a CommentAnnotationWrapper")
+                    CCILogger.warning(f"Annotation {comment_ann.getId()} is not a CommentAnnotationWrapper")
                     continue
                 value = comment_ann.getValue()
-                logger.info(f"Found comment annotation with value: {value}")
+                CCILogger.info(f"Found comment annotation with value: {value}")
 
             except Exception as e:
-                logger.error(f"Failed to get comment annotation: {str(e)} stack: {traceback.format_exc()}")
+                CCILogger.error(f"Failed to get comment annotation: {str(e)} stack: {traceback.format_exc()}")
                 continue
             
         return value
@@ -273,12 +275,12 @@ class OmeroConnection:
     #     for map_ann in self.get_map_annotations():
     #         try:
     #             if not isinstance(map_ann, omero.gateway.MapAnnotationWrapper):
-    #                 logger.warning(f"Annotation {map_ann.getId()} is not a MapAnnotationWrapper")
+    #                 CCILogger.warning(f"Annotation {map_ann.getId()} is not a MapAnnotationWrapper")
     #                 continue
     #             val = map_ann.getValue()
-    #             logger.info(f"Found map annotation {name} {val}")
+    #             CCILogger.info(f"Found map annotation {name} {val}")
     #         except Exception as e:
-    #             logger.error(f"Failed to get map annotation: {str(e)} stack: {traceback.format_exc()}")
+    #             CCILogger.error(f"Failed to get map annotation: {str(e)} stack: {traceback.format_exc()}")
     #             continue
             
     #     return None
@@ -287,7 +289,7 @@ class OmeroConnection:
     def get_map_annotation(self, name, value):
         for map_ann in self.get_map_annotations():
             if not isinstance(map_ann._obj, omero.model.MapAnnotationI):
-                #logger.warning(f"Annotation {map_ann.getId()} is not a MapAnnotationWrapper")
+                #CCILogger.warning(f"Annotation {map_ann.getId()} is not a MapAnnotationWrapper")
                 continue
             n, v = map_ann.getValue()[0]
             if n == name and v == value:
@@ -307,7 +309,7 @@ class OmeroConnection:
         map_annotations = []
         image = self.conn.getObject("Image", imageId)
         if not image:
-            logger.warning(f"Image with ID {imageId} not found")
+            CCILogger.warning(f"Image with ID {imageId} not found")
             return map_annotations
         
         for ann in image.listAnnotations():
@@ -329,7 +331,7 @@ class OmeroConnection:
         tags = []
         image = self.conn.getObject("Image", imageId)
         if not image:
-            logger.warning(f"Image with ID {imageId} not found")
+            CCILogger.warning(f"Image with ID {imageId} not found")
             return tags
         
         for ann in image.listAnnotations():
@@ -351,19 +353,19 @@ class OmeroConnection:
             try:
                 tag_ann = self.get_tag_annotation(tag_value)
                 if not tag_ann:
-                    logger.info(f"tag {tag_value} does not exist. Creating it")
+                    CCILogger.info(f"tag {tag_value} does not exist. Creating it")
                     tag_ann = omero.gateway.TagAnnotationWrapper(self.conn)
                     tag_ann.setValue(tag_value)
                     tag_ann.save()
 
-                logger.info(f"linking tag {tag_value} to image {image.getId()}")
+                CCILogger.info(f"linking tag {tag_value} to image {image.getId()}")
                 image.linkAnnotation(tag_ann)
             except omero.ValidationException as e:
-                logger.warning(f"Failed to insert the tag {tag_value} to image {image}: {str(e)}")
+                CCILogger.warning(f"Failed to insert the tag {tag_value} to image {image}: {str(e)}")
             except omero.ApiUsageException as e:
-                 logger.warning(f"Failed to insert the tag {tag_value} to image {image}: {str(e)}")
+                 CCILogger.warning(f"Failed to insert the tag {tag_value} to image {image}: {str(e)}")
             except Exception as e:
-                logger.error(f"Failed to set/get tag annotations on image {image}: {str(e)}")
+                CCILogger.error(f"Failed to set/get tag annotations on image {image}: {str(e)}")
                 
 
     #return the first value of the given key or None
