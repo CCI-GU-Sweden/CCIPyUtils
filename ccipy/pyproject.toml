@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ccipy"
+version = "0.1.0"
+description = "Meta-package for CCIPyUtils (no code)"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "You"}]
+license = {text = "MIT"}
+
+dependencies = []
+
+[project.optional-dependencies]
+utils = ["ccipy-utils>=0.1.0"]
+omero = ["ccipy-omero>=0.1.0"]
+extra = ["ccipy-extra>=0.1.0"]
+yolo = ["ccipy-yolo-wrapper>=0.1.0"]
+stardist = ["ccipy-stardist-utils>=0.1.0"]
+all = ["ccipy-utils>=0.1.0", "ccipy-omero>=0.1.0", "ccipy-extra>=0.1.0", "ccipy-yolo-wrapper>=0.1.0", "ccipy-stardist-utils>=0.1.0"]
+
+[tool.setuptools]
+# No code packaged here.
