@@ -1,0 +1,32 @@
+# === Core development dependencies ===
+setuptools>=70.0.0
+wheel
+pip>=24.0
+
+# === Code quality & linting ===
+black>=24.0.0
+isort>=5.13.2
+flake8>=7.0.0
+mypy>=1.10.0
+
+# === Testing & coverage ===
+pytest>=8.0.0
+pytest-cov>=5.0.0
+coverage>=7.4.0
+
+# === Type checking / static analysis ===
+types-setuptools
+types-requests
+# (add more stub packages as needed)
+
+# === Documentation (optional) ===
+sphinx>=7.0.0
+sphinx-rtd-theme>=2.0.0
+
+# === Packaging & publishing (optional) ===
+build>=1.2.1
+twine>=5.1.0
+
+# === Utilities (optional, often used in CI) ===
+tox>=4.11.0
+pre-commit>=3.7.0
