@@ -17,6 +17,7 @@ coverage>=7.4.0
 # === Type checking / static analysis ===
 types-setuptools
 types-requests
+ruff
 # (add more stub packages as needed)
 
 # === Documentation (optional) ===
