@@ -1,0 +1,13 @@
+name: Run Tests (ccipy-omero)
+
+on:
+  push:
+    branches: [ "main", "feat/*" ]
+  pull_request:
+
+jobs:
+  run-tests:
+    uses: ./.github/workflows/test-base.yml
+    with:
+      project: ccipy-omero
+      python-version: "3.12"
