@@ -57,7 +57,7 @@ class CCILogger:
     _logger: Optional[logging.Logger] = None
 
     @classmethod
-    def _setup_logger(cls, log_file_name: str, app_name: str, level=logging.DEBUG):
+    def setup_logger(cls, log_file_name: str, app_name: str, level=logging.DEBUG):
 
         #check logfile existance
         if not Path(log_file_name).is_file():
@@ -75,10 +75,10 @@ class CCILogger:
         localLogger.setLevel(level)
         logging.getLogger(app_name).addHandler(localLogger)
             
-        str_level = logging.getLevelName(level)
-        cls.info(f"Logger set up with level: {str_level}")
-        
+        str_level = logging.getLevelName(level)        
         cls._logger = logging.getLogger(app_name)
+        cls.info(f"Logger set up with level: {str_level}")
+
 
     @classmethod
     def log(cls, level: str, msg: str):

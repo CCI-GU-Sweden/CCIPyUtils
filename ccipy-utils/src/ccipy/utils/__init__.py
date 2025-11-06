@@ -1,5 +1,6 @@
 import re
 from pathlib import Path
+from ccipy.utils.CCILogger import CCILogger
 
 def slugify(text: str) -> str:
     r"""Convert text to a simple slug.r"""
