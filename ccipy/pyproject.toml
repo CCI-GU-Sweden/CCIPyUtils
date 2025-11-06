@@ -19,7 +19,8 @@ omero = ["ccipy-omero>=0.1.0"]
 extra = ["ccipy-extra>=0.1.0"]
 yolo = ["ccipy-yolo-wrapper>=0.1.0"]
 stardist = ["ccipy-stardist-utils>=0.1.0"]
-all = ["ccipy-utils>=0.1.0", "ccipy-omero>=0.1.0", "ccipy-extra>=0.1.0", "ccipy-yolo-wrapper>=0.1.0", "ccipy-stardist-utils>=0.1.0"]
+atlas = ["ccipy-atlas>=0.1.0"]
+all = ["ccipy-utils>=0.1.0", "ccipy-omero>=0.1.0", "ccipy-extra>=0.1.0", "ccipy-yolo-wrapper>=0.1.0", "ccipy-stardist-utils>=0.1.0", "ccipy-atlas >=0.1.0"]
 
 [tool.setuptools]
 # No code packaged here.

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ccipy-atlas"
+version = "0.1.0"
+description = "Utilities under the ccipy namespace"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{name = "You"}]
+license = {text = "MIT"}
+dependencies = ["pyside6", "ccipy.utils"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["ccipy.atlas"]
+namespaces = true
