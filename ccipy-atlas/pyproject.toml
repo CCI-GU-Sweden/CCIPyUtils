@@ -16,3 +16,35 @@ dependencies = ["pyside6", "ccipy.utils"]
 where = ["src"]
 include = ["ccipy.atlas"]
 namespaces = true
+
+[tool.ruff]
+# Enable all basic Python style checks
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "N",   # flake8-naming (PEP 8 naming conventions)
+]
+# Optional: ignore rules you don't care about
+# ignore = ["E501"]  # e.g., line length if you're using Black
+
+# Allow Ruff to automatically fix what it can
+fix = true
+
+# Show concise output
+output-format = "concise"
+
+# Exclude some typical directories
+exclude = [
+    ".venv",
+    "build",
+    "dist",
+    "__pycache__",
+]
+
+# You can also restrict the maximum line length if you like:
+line-length = 88
+
+[tool.ruff.format]
+#quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false

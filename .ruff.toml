@@ -1,0 +1,93 @@
+# ruff.toml
+
+# --- Linting configuration ---
+select = ["E", "F", "N"]
+
+ignore = ["E501"]  # Ignore line length if you use a formatter like Black or Ruff's own
+
+fix = true
+line-length = 120
+target-version = "py312"
+
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "env",
+]
+
+# --- Optional naming rule configuration ---
+# [flake8-naming]
+# classmethod_decorators = ["classmethod"]
+# staticmethod_decorators = ["staticmethod"]
+
+# --- Formatter configuration ---
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+
+
+# select = [
+#     "E",   # pycodestyle errors
+#     "F",   # pyflakes
+#     "N",   # flake8-naming (enforce PEP8 snake_case)
+# ]
+
+# # Optionally ignore line length (if you use Black)
+# ignore = ["E501"]
+
+# # Enable autofix
+# fix = true
+
+# # Apply to all subprojects, except common junk dirs
+# exclude = [
+#     ".git",
+#     ".venv",
+#     "__pycache__",
+#     "build",
+#     "dist",
+#     "env",
+# ]
+
+# # Customize formatting
+# line-length = 88
+# target-version = "py311"
+
+# # Optional: define global per-project settings
+# [flake8-naming]
+# classmethod_decorators = ["classmethod"]
+# staticmethod_decorators = ["staticmethod"]
+
+
+# select = [ "E",   # pycodestyle errors
+#     "F",   # pyflakes
+#     "N",   # flake8-naming (PEP 8 naming conventions)
+# ]
+# # Optional: ignore rules you don't care about
+# # ignore = ["E501"]  # e.g., line length if you're using Black
+
+# # Allow Ruff to automatically fix what it can
+# fix = true
+
+# # Show concise output
+# output-format = "concise"
+
+# # Exclude some typical directories
+# exclude = [
+#     ".venv",
+#     "build",
+#     "dist",
+#     "__pycache__",
+# ]
+
+# # You can also restrict the maximum line length if you like:
+# line-length = 88
+
+# [tool.ruff.format]
+# #quote-style = "double"
+# indent-style = "space"
+# skip-magic-trailing-comma = false

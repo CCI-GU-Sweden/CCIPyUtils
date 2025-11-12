@@ -1,54 +1,55 @@
-#from operator import index
-#import signal
+# from operator import index
+# import signal
 from PySide6.QtCore import Qt, QSortFilterProxyModel, Signal
 from PySide6.QtWidgets import QFileSystemModel
-#from watchdog.observers.polling import PollingObserver
+
+# from watchdog.observers.polling import PollingObserver
 from pathlib import Path
-#from ccipy.utils.CCILogger import CCILogger
-#import ImgFileEventHandler
-#import logger
+
+# from ccipy.utils.CCILogger import CCILogger
+# import ImgFileEventHandler
+# import logger
 import os
 
 DIR_PATH_ROLE = Qt.ItemDataRole.DisplayRole + 1
 
+
 class CCISessionFilesModel(QSortFilterProxyModel):
-    
-    directoryLoaded = Signal(str)
-    
-    def __init__(self,  parent=None):
+    directory_loaded = Signal(str)
+
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.fsm = QFileSystemModel()
         self.setSourceModel(self.fsm)
         self.dataSets = []
         self.dir_watcher = None
- #       self.fsm.directoryLoaded.connect(self.logDirLoaded)
-        self.fsm.directoryLoaded.connect(self.directoryLoaded)
- #       CCILogger.setup_logger()
-        
+        #       self.fsm.directoryLoaded.connect(self.logDirLoaded)
+        self.fsm.directoryLoaded.connect(self.directory_loaded)
+
+    #       CCILogger.setup_logger()
+
     # def setRootPath(self, rootPath):
     #     return self.mapFromSource(self.fsm.setRootPath(rootPath))
-    
-    
-    
-    def indexForPath(self, pathStr):
-        idx =  self.mapFromSource(self.fsm.index(pathStr))
+
+    def index_for_path(self, path_str):
+        idx = self.mapFromSource(self.fsm.index(path_str))
         return idx
 
-    def setRootAndDataSets(self, rootPath, orderedDataSets):
-        self.dataSets = orderedDataSets
-        
+    def set_root_and_data_sets(self, root_path, ordered_data_sets):
+        self.dataSets = ordered_data_sets
+
         if self.dir_watcher:
-                self.dir_watcher.stop()
-            
-        #self.dir_watcher = ImgFileEventHandler.SessionDirWatcher(rootPath,self.addIfSDirectory)
-        
-        idx = self.mapFromSource(self.fsm.setRootPath(rootPath))
+            self.dir_watcher.stop()
+
+        # self.dir_watcher = ImgFileEventHandler.SessionDirWatcher(rootPath,self.addIfSDirectory)
+
+        idx = self.mapFromSource(self.fsm.setRootPath(root_path))
         return idx
 
-#    def logDirLoaded(self, path):
-#        CCILogger.info(f"Dir {path} loaded")
+    #    def logDirLoaded(self, path):
+    #        CCILogger.info(f"Dir {path} loaded")
 
-    def addIfSDirectory(self, path : Path):
+    def add_if_s_directory(self, path: Path):
         return
 
     # def filterAcceptsRow(self, source_row, source_parent):
@@ -68,10 +69,9 @@ class CCISessionFilesModel(QSortFilterProxyModel):
     #     # Only accept directories that are descendants of root_path
     #     if not dir_path.startswith(model.rootPath() + os.sep):
     #         return False
-        
+
     #     if model.rowCount(index) == 0:
     #         return True
-        
 
     #     # If the directory can't be listed (not loaded yet), accept it so it can be expanded
     #     if not os.path.exists(dir_path):
@@ -88,7 +88,6 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 
     #     return False
 
-
     def filterAcceptsRow(self, source_row, source_parent):
         index = self.fsm.index(source_row, 0, source_parent)
 
@@ -100,20 +99,19 @@ class CCISessionFilesModel(QSortFilterProxyModel):
         dir_path = self.fsm.filePath(index)
         if dir_path == self.fsm.rootPath():
             return True
-                
+
         # Reject if not a descendant of root_path
         # (os.path.commonpath returns the shared prefix path)
         if not dir_path.startswith(self.fsm.rootPath() + os.sep):
             return False
-        
+
         if Path(dir_path).name in self.dataSets:
             return True
-        
-        dirPath = Path(dir_path)
-        if dirPath.name.startswith("S_"):
+
+        dir_path_name = Path(dir_path).name
+        if dir_path_name.startswith("S_"):
             return True
-        
-        
+
         return False
         # try:
         #     # List all entries in the directory
@@ -126,40 +124,41 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 
         # return False  # No matching subdirectory found
 
+
 # class DirItem:
-    
+
 #     def __init__(self, dir : Path, parentDirItem, row):
 #         self.childDirList = []
 #         self.dir = dir
 #         self.parent = parentDirItem
 #         self.row = row
-        
+
 #     def childCount(self):
 #         return len(self.childDirList)
-    
+
 #     def addChildDir(self, dir : Path):
 #         self.childDirList.append(DirItem(dir,self, self.childCount()))
-         
+
 #     def child(self, row):
 #         return self.childDirList[row]
-         
+
 #     def name(self):
 #         return self.dir.name
-    
+
 #     def parent(self):
 #         return self.parent
-    
+
 #     def childRow(self, dir):
 #         row = -1
 #         for i,d in enumerate(self.childDirList):
 #             if d.name() == dir.name:
 #                 row = i
-                    
+
 #         return row
-        
+
 #     def row(self):
 #         return self.row
-    
+
 #     def data(self, role=Qt.DisplayRole):
 #         if role == Qt.DisplayRole:
 #             d = self.dir.name
@@ -173,25 +172,25 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 #     def clear(self):
 #         for i in self.childDirList:
 #             i.clear()
-            
+
 #         self.childDirList = []
 
 
 # class SessionFilesModel(QAbstractTableModel):
 #     def __init__(self,  parent=None):
 #         super().__init__(parent)
-        
+
 #         #self.parentDirList = []
 #         self.dir_watcher = None
 #         self.root = DirItem(Path(),None,0)
-        
+
 #     def startMonitoring(self, projectBasePath, dataDir, orderedDataSets, sessionUID):
-        
+
 #         self.clear()
-        
+
 #         sessionDirName = "session_" + str(sessionUID)
 #         sessionDirPath = Path(projectBasePath) / Path(dataDir) / Path(sessionDirName)
-        
+
 #         for ods_dir in sessionDirPath.iterdir():
 #             if ods_dir.is_dir() and ods_dir.name in orderedDataSets:
 #                 for s_dir in ods_dir.iterdir():
@@ -199,12 +198,12 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 #                         self.addIfSDirectory(s_dir, s_dir.parent)
 #                     else:
 #                         self.addIfSDirectory(s_dir)
-                        
+
 #         if self.dir_watcher:
 #             self.dir_watcher.stop()
-            
+
 #         self.dir_watcher = ImgFileEventHandler.SessionDirWatcher(sessionDirPath,self.addIfSDirectory)
-        
+
 #     def clear(self):
 #         self.beginRemoveRows(QModelIndex(),0,self.rowCount()-1)
 #         self.root.clear()
@@ -225,7 +224,7 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 #                 if not pid.isValid():
 #                     logger.info(f"adding parent dir: {parentDir.name}")
 #                     pid = self.addParentDir(parentDir)
-            
+
 #             self.beginInsertRows(pid,self.rowCount(), self.rowCount())
 #             if pid.isValid():
 #                 pid.internalPointer().addChildDir(dir)
@@ -256,7 +255,7 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 #             return self.createIndex(row, column, child_node)
 #         else:
 #             return QModelIndex()
-    
+
 #     def parent(self, index = QModelIndex()):
 #         if not index.isValid():
 #             return QModelIndex()
@@ -279,15 +278,15 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 #             return parent.internalPointer().childCount()
 
 #     def data(self, index: QModelIndex, role=Qt.DisplayRole):
-        
+
 #         parent = index.parent()
 #         if not parent.isValid():
 #             child = self.root.child(index.row())
 #         else:
 #             child = parent.internalPointer().child(index.row())
-            
+
 #         return child.data(role)
-            
+
 #         #     if role == Qt.DisplayRole:
 #         #         return self.root.child(index.row()).data(role)
 #         #     else:
@@ -299,4 +298,3 @@ class CCISessionFilesModel(QSortFilterProxyModel):
 
 #     def headerData(self, section, orientation, role=Qt.DisplayRole):
 #         return "Directory"
-     

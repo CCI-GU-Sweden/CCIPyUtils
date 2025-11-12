@@ -1,1 +1,1 @@
-from ccipy.atlas.CCIAtlasDomModel import CCIAtlasDomModel
+from ccipy.atlas.cci_atlas_dom_model import CCIAtlasDomModel
