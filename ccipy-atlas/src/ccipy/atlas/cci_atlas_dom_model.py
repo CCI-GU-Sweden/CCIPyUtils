@@ -47,12 +47,14 @@ class CCIAtlasDomItem:
 
 
 class CCIAtlasDomModel(QAbstractItemModel):
+    
     def __init__(self, parent=None):
         super().__init__(parent)
         self.dom_document: QDomDocument = QDomDocument()
         self.root_item: CCIAtlasDomItem | None = None
         self.root_element: QDomElement = QDomElement()
         self.base_folder: Path = Path()
+        self._anchors: dict[str, QPersistentModelIndex] = {}
 
     def load_from_dom(self, atlas_dom_document: QDomDocument, base_folder: str):
         self.dom_document: QDomDocument = atlas_dom_document
@@ -60,7 +62,9 @@ class CCIAtlasDomModel(QAbstractItemModel):
         self.root_element = atlas_dom_document.documentElement()
         self.base_folder = Path(base_folder)
         self.dataChanged.emit(self.index(0,0), self.index(self.rowCount()-1, self.columnCount()-1))
-        
+    
+
+
     def parent(self, child: QModelIndex | QPersistentModelIndex = QModelIndex()) -> QModelIndex: # pyright: ignore[reportIncompatibleMethodOverride]
         if not child.isValid():
             return QModelIndex()
@@ -130,6 +134,89 @@ class CCIAtlasDomModel(QAbstractItemModel):
     #####################################################################
     # cool methods below
     #####################################################################
+    def get_document(self) -> QDomDocument:
+        return self.dom_document
+
+    def add_atlas_region(self, node: QDomNode)-> bool:
+        atlas_index = self.find_index_by_name("RegionSet", store_anchor=True)
+        if not atlas_index.isValid():
+            return False
+        
+        return self.insert_node(atlas_index, node)
+    
+    def get_region_set_index(self):
+        return self.find_index_by_name("RegionSet", store_anchor=True)
+
+    def find_index_by_name(self, name: str, store_anchor: bool = False, column=0) -> QModelIndex:
+        if self.rowCount(QModelIndex()) == 0:
+            return QModelIndex()
+        
+        if name in self._anchors:
+            return self.anchor_index(name)
+
+        # Start from the very first root index; MatchRecursive walks the whole tree
+        start = self.index(0, column, QModelIndex())
+        hits = self.match(start, Qt.DisplayRole, name, hits=1,
+                        flags=Qt.MatchExactly | Qt.MatchRecursive)
+        if store_anchor and hits:
+            self.set_anchor(name, hits[0])
+        return hits[0] if hits else QModelIndex()
+
+    def node_from_index(self, index: QModelIndex) -> QDomNode:
+        """Get the QDomNode for a given QModelIndex."""
+        if not index.isValid():
+            return self.dom_document.documentElement()
+        
+        item: CCIAtlasDomItem = index.internalPointer()
+        return item.node
+
+    def insert_node(self, parent_index: QModelIndex, dom_node: QDomNode) -> bool:
+        """Insert an existing QDomNode (with its children) under parent_index at row."""
+        parent_node = self.node_from_index(parent_index)
+
+        # Ensure node belongs to this document
+        if dom_node.ownerDocument() != self.dom_document:
+            dom_node = self.dom_document.importNode(dom_node, True)  # deep copy, keeps children
+
+        row = parent_node.childNodes().length()
+
+        self.beginInsertRows(parent_index, row, row)
+
+        parent_node.appendChild(dom_node)
+
+        self.endInsertRows()
+        return True
+
+    def set_anchor(self, name: str, index: QModelIndex) -> None:
+        """
+        Store a persistent index under the given name.
+        If index is invalid, remove the anchor for that name.
+        """
+        if not index.isValid():
+            # Treat setting an invalid index as "remove this anchor"
+            self._anchors.pop(name, None)
+            return
+
+        self._anchors[name] = QPersistentModelIndex(index)
+
+    def anchor_index(self, name: str) -> QModelIndex:
+        """
+        Return the (normal) QModelIndex for a stored anchor name,
+        or an invalid QModelIndex if not found / no longer valid.
+        """
+        pidx = self._anchors.get(name)
+        if pidx is None or not pidx.isValid():
+            # Clean up dead anchor if needed
+            self._anchors.pop(name, None)
+            return QModelIndex()
+
+        # In PySide/PyQt, QPersistentModelIndex is usually usable directly
+        # as a QModelIndex, but returning it as QModelIndex is explicit:
+        return QModelIndex(pidx)
+
+    def remove_anchor(self, name: str) -> None:
+        self._anchors.pop(name, None)
+
 
     #def getSessionByName()
 
