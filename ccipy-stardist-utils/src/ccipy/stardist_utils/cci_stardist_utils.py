@@ -11,17 +11,19 @@ def get_latest_model_name(file_path="latest.mod"):
 def save_latest_model_name(model_name, file_path="latest.mod"):
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(model_name)
-        
-  
+
+
 def get_latest_sd_model(basedir='models', file_path="latest.mod"):
     latest_model = get_latest_model_name(file_path)
     model = StarDist2D(None, name=latest_model, basedir=basedir)
     return model
 
+
 def get_sd_model(model_name, basedir='models'):
     model = StarDist2D(None, name=model_name, basedir=basedir)
     return model
-    
+
+
 def split_slices(vol, depth_axis=0, copy=False):
     # Move depth axis to the front so indexing is simple and returns views
     v = np.moveaxis(vol, depth_axis, 0)  # shape -> (Z, ..., ...)
@@ -29,21 +31,23 @@ def split_slices(vol, depth_axis=0, copy=False):
     return [s if not copy else s.copy() for s in v]
 
 
-def random_fliprot(img, mask): 
+def random_fliprot(img, mask):
     assert img.ndim >= mask.ndim
     axes = tuple(range(mask.ndim))
     perm = tuple(np.random.permutation(axes))
-    img = img.transpose(perm + tuple(range(mask.ndim, img.ndim))) 
-    mask = mask.transpose(perm) 
-    for ax in axes: 
+    img = img.transpose(perm + tuple(range(mask.ndim, img.ndim)))
+    mask = mask.transpose(perm)
+    for ax in axes:
         if np.random.rand() > 0.5:
             img = np.flip(img, axis=ax)
             mask = np.flip(mask, axis=ax)
-    return img, mask 
+    return img, mask
+
 
 def random_intensity_change(img):
-    img = img*np.random.uniform(0.6,2) + np.random.uniform(-0.2,0.2)
+    img = img * np.random.uniform(0.6, 2) + np.random.uniform(-0.2, 0.2)
     return img
+
 
 def to_gray(yx_or_yxc: np.ndarray) -> np.ndarray:
     """Return a 2D float32 image in YX. If RGB/RGBA, convert to luminance."""
@@ -66,10 +70,11 @@ def augmenter(x, y):
     x, y = random_fliprot(x, y)
     x = random_intensity_change(x)
     # add some gaussian noise
-    sig = 0.02*np.random.uniform(0,1)
-    x = x + sig*np.random.normal(0,1,x.shape)
+    sig = 0.02 * np.random.uniform(0, 1)
+    x = x + sig * np.random.normal(0, 1, x.shape)
     return x, y
 
+
 def prune_empty_labels(images, labels):
-    img_lab = [(i,l) for (i,l) in zip(images,labels) if np.max(l)>0]
+    img_lab = [(im, lb) for (im, lb) in zip(images, labels) if np.max(lb) > 0]
     return zip(*img_lab)
