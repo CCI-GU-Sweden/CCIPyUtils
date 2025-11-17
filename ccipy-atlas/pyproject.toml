@@ -17,34 +17,32 @@ where = ["src"]
 include = ["ccipy.atlas"]
 namespaces = true
 
+# ---------------------------------
+# Ruff configuration inside pyproject
+# ---------------------------------
 [tool.ruff]
-# Enable all basic Python style checks
-select = [
-    "E",   # pycodestyle errors
-    "F",   # pyflakes
-    "N",   # flake8-naming (PEP 8 naming conventions)
-]
-# Optional: ignore rules you don't care about
-# ignore = ["E501"]  # e.g., line length if you're using Black
+fix = false #disable autofix
+line-length = 120
+target-version = "py312"
 
-# Allow Ruff to automatically fix what it can
-fix = true
-
-# Show concise output
-output-format = "concise"
-
-# Exclude some typical directories
 exclude = [
+    ".git",
     ".venv",
+    "__pycache__",
     "build",
     "dist",
-    "__pycache__",
+    "env",
 ]
 
-# You can also restrict the maximum line length if you like:
-line-length = 88
+# --- Linting (PEP8, pyflakes, naming, etc.) ---
+[tool.ruff.lint]
+select = ["E", "W", "F", "N"]
+ignore = ["E501"]             # ignore long-line rule
+preview = true               # optional
 
+
+# --- Format section (Ruff formatter) ---
 [tool.ruff.format]
-#quote-style = "double"
+quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false

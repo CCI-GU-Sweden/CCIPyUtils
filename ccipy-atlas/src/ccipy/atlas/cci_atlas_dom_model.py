@@ -18,7 +18,7 @@ class CCIAtlasDomItem:
         self.row_number = row
         self.children = []
         self.text = ""
-        
+
         if node is None:
             return
         # Preload children
@@ -41,13 +41,13 @@ class CCIAtlasDomItem:
 
     def get_node_name(self) -> str:
         return self.node.nodeName()
-    
+
     def get_node_text(self) -> str:
         return self.text
 
 
 class CCIAtlasDomModel(QAbstractItemModel):
-    
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.dom_document: QDomDocument = QDomDocument()
@@ -61,20 +61,18 @@ class CCIAtlasDomModel(QAbstractItemModel):
         self.root_item = CCIAtlasDomItem(atlas_dom_document.documentElement(), 0)
         self.root_element = atlas_dom_document.documentElement()
         self.base_folder = Path(base_folder)
-        self.dataChanged.emit(self.index(0,0), self.index(self.rowCount()-1, self.columnCount()-1))
-    
+        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
 
-
-    def parent(self, child: QModelIndex | QPersistentModelIndex = QModelIndex()) -> QModelIndex: # pyright: ignore[reportIncompatibleMethodOverride]
+    def parent(self, child: QModelIndex | QPersistentModelIndex = QModelIndex()) -> QModelIndex:  # pyright: ignore[reportIncompatibleMethodOverride]
         if not child.isValid():
             return QModelIndex()
-        
+
         child_item = child.internalPointer()
         parent_item = child_item.parent
-        
+
         if parent_item == self.root_item or not parent_item:
             return QModelIndex()
-            
+
         return self.createIndex(parent_item.row(), 0, parent_item)
 
     def columnCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()):
@@ -85,72 +83,71 @@ class CCIAtlasDomModel(QAbstractItemModel):
             parent_item = self.root_item
         else:
             parent_item = parent.internalPointer()
-        
+
         if not parent_item:
             return 0
-        
+
         return len(parent_item.children)
 
     def index(self, row: int, column: int, parent: QModelIndex | QPersistentModelIndex = QModelIndex()):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
-        
+
         parent_item = self.root_item if not parent.isValid() else parent.internalPointer()
         if not parent_item:
             return QModelIndex()
-        
+
         child_item = parent_item.child(row)
-        
+
         if child_item:
             return self.createIndex(row, column, child_item)
-        
+
         return QModelIndex()
 
-    def data(self, index: QModelIndex | QPersistentModelIndex = QModelIndex(), role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole): # pyright: ignore[reportIncompatibleMethodOverride]
-        
+    def data(self, index: QModelIndex | QPersistentModelIndex = QModelIndex(), role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole):  # pyright: ignore[reportIncompatibleMethodOverride]
+
         if not index.isValid() or role != Qt.ItemDataRole.DisplayRole:
             return None
-        
+
         item: CCIAtlasDomItem = index.internalPointer()
-        
-        
+
         if index.column() == 0:
             return item.get_node_name()
         elif index.column() == 1:
             #     if node.isElement():
             #         attrs = node.toElement().attributes()
-            #         return ' '.join([f'{attrs.item(i).nodeName()}="{attrs.item(i).nodeValue()}"' 
+            #         return ' '.join([f'{attrs.item(i).nodeName()}="{attrs.item(i).nodeValue()}"'
             #                        for i in range(attrs.count())])
             #        elif index.column() == 2:
             return item.get_node_text()
-        
+
         return None
 
-    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole): # pyright: ignore[reportIncompatibleMethodOverride]
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # pyright: ignore[reportIncompatibleMethodOverride]
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return ["Name", "Value"][section]
         return None
-    
+
     #####################################################################
     # cool methods below
     #####################################################################
     def get_document(self) -> QDomDocument:
         return self.dom_document
 
-    def add_atlas_region(self, node: QDomNode)-> bool:
+    def add_atlas_region(self, node: QDomNode) -> bool:
         atlas_index = self.find_index_by_name("RegionSet", store_anchor=True)
         if not atlas_index.isValid():
             return False
-        
+
         return self.insert_node(atlas_index, node)
-    
+
     def get_region_set_index(self):
         return self.find_index_by_name("RegionSet", store_anchor=True)
 
     def find_index_by_name(self, name: str, store_anchor: bool = False, column=0) -> QModelIndex:
         if self.rowCount(QModelIndex()) == 0:
             return QModelIndex()
-        
+
         if name in self._anchors:
             return self.anchor_index(name)
 
@@ -166,7 +163,7 @@ class CCIAtlasDomModel(QAbstractItemModel):
         """Get the QDomNode for a given QModelIndex."""
         if not index.isValid():
             return self.dom_document.documentElement()
-        
+
         item: CCIAtlasDomItem = index.internalPointer()
         return item.node
 
@@ -217,14 +214,13 @@ class CCIAtlasDomModel(QAbstractItemModel):
     def remove_anchor(self, name: str) -> None:
         self._anchors.pop(name, None)
 
-
-    #def getSessionByName()
+    # def getSessionByName()
 
     def get_base_folder(self):
         return self.base_folder
 
     def get_data_dir(self):
-        #error handling?
+        # error handling?
         dds = self.root_element.elementsByTagName(DATA_FOLDER_TAG_NAME)
         dd = dds.at(0)
         dde = dd.toElement()
@@ -238,11 +234,11 @@ class CCIAtlasDomModel(QAbstractItemModel):
             uid = session_nodes.at(sn).firstChildElement(UID_TAG_NAME)
             session_string = name.text()
             session_uid = uid.text()
-            
+
             session_names.append((session_string, session_uid))
-            
+
         return session_names
-    
+
     def get_ordered_data_sets_for_session(self, session_uid):
         ods = []
         session_nodes = self.root_element.elementsByTagName(SESSION_TAG_NAME)
@@ -256,5 +252,5 @@ class CCIAtlasDomModel(QAbstractItemModel):
             for od in range(ods_nodes.length()):
                 od_name = ods_nodes.at(od).firstChildElement(NAME_TAG_NAME)
                 ods.append(od_name.text())
-                
+
         return ods
