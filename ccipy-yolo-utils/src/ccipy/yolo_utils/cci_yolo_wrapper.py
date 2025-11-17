@@ -1,7 +1,9 @@
 """
-    Wrapper for stardist models in a way that is compatible with CCI code elsewhere
+   Wrapper for stardist models in a way that is compatible with CCI code elsewhere
 """
-
+from typing import Any
+from ultralytics import yolomodel
+from ultralytics import yolo
 
 class CCIYoloWrapper:
 
@@ -21,7 +23,7 @@ class CCIYoloWrapper:
     def predict(self, img, **kwargs):
         return self.model.predict_instances(img, **kwargs)
 
-    def train(self, x, y, validation_data: tuple[Any, any], augmenter=None, epochs=300, ** kwargs):
+    def train(self, x, y, validation_data: tuple[Any, Any], augmenter=None, epochs=300, ** kwargs):
         x_val, y_val = validation_data
         # self.model.train(X, Y, validation_data=validation_data, augmenter=augmenter, epochs=epochs, **kwargs)
         # self.model.optimize_thresholds(X, Y)
