@@ -37,7 +37,7 @@ class CCIArgParser:
         """Access the underlying ArgumentParser (for help output, etc.)."""
         return self._parser
 
-    def parse(self, argv: Optional[list[str]] = None, on_empty: Literal["help", "error", "ok"] = "help", help_exit_code: int = 0 ) -> Namespace:
+    def parse(self, argv: Optional[list[str]] = None, on_empty: Literal["help", "error", "ok"] = "help", help_exit_code: int = 0) -> Namespace:
         """
         Parse args (default: sys.argv[1:]).
         on_empty:
@@ -59,7 +59,6 @@ class CCIArgParser:
 
         self._args = self._parser.parse_args(argv)
         return self._args
-
 
     def has(self, name: str) -> bool:
         """Was this option *supplied* by the user? (True even if value is False/0/'' for bool/ints)"""
@@ -110,9 +109,9 @@ class CCIArgParser:
             if typ is bool:
                 # Bool: create --flag / --no-flag
                 group = self._parser.add_mutually_exclusive_group(required=required)
-                group.add_argument(flag,    dest=name, action="store_true",  default=argparse.SUPPRESS,
+                group.add_argument(flag, dest=name, action="store_true", default=argparse.SUPPRESS,
                                    help=f"Set {name} true")
-                group.add_argument(f"--no-{name.replace('_','-')}", dest=name, action="store_false",
+                group.add_argument(f"--no-{name.replace('_', '-')}", dest=name, action="store_false",
                                    default=argparse.SUPPRESS, help=f"Set {name} false")
                 # Keep SUPPRESS so we can detect presence. If a default is given in the spec,
                 # remember it in our map (do NOT set parser default, to preserve presence check).

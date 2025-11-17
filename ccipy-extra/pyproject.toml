@@ -15,3 +15,33 @@ dependencies = ["pandas>=2.2", "matplotlib>=3.8"]
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["ccipy.extra*"]
+
+# ---------------------------------
+# Ruff configuration inside pyproject
+# ---------------------------------
+[tool.ruff]
+fix = false #disable autofix
+line-length = 120
+target-version = "py312"
+
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "env",
+]
+
+# --- Linting (PEP8, pyflakes, naming, etc.) ---
+[tool.ruff.lint]
+select = ["E", "W", "F", "N"]
+ignore = ["E501"]             # ignore long-line rule
+preview = true               # optional
+
+
+# --- Format section (Ruff formatter) ---
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
