@@ -1,10 +1,11 @@
 import string
 
+
 def format_by_order(fmt: str, values):
     """
     Fills a Python format string using values in order,
     ignoring the placeholder names (e.g. {x}, {y}, etc.).
-    
+
     Example:
         format_by_order("Hello {name}, you have {count} messages", ["Alice", 5])
         → "Hello Alice, you have 5 messages"

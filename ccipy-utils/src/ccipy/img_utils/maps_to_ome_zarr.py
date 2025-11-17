@@ -6,7 +6,7 @@ import numpy as np
 from ome_zarr.io import parse_url
 from ome_zarr.writer import write_multiscale
 import pandas as pd
-#import skimage.io as skio
+# import skimage.io as skio
 import imageio.v3 as iio
 import xmltodict
 import zarr
@@ -16,17 +16,18 @@ import zarr.creation
 
 def find_image_pyramids(maps_proj_path: Path, pyramid_file_name: str = "pyramid.xml") -> list[Path]:
     """ Find all image pyramids in the maps project folder.
-        Args: 
+        Args:
             maps_proj_path (Path): Path to the maps project folder.
         returns:
             List of Paths to the image pyramids found
     """
     ids = []
-    for pyramidXML_path in maps_proj_path.glob(f"**/{pyramid_file_name}"):
-        image_pyramid = pyramidXML_path.parents[2]
+    for pyramid_xml_path in maps_proj_path.glob(f"**/{pyramid_file_name}"):
+        image_pyramid = pyramid_xml_path.parents[2]
         ids.append(image_pyramid)
 
     return ids
+
 
 def get_pyramid_data_path(pyramid_file_folder: Path, default_folder_name: str = "image_pyramid") -> tuple[Path, str]:
     """ Get the pyramid data path and image id from the pyramid file folder.
@@ -48,7 +49,7 @@ def get_pyramid_data_path(pyramid_file_folder: Path, default_folder_name: str = 
 
 def get_first_tile(pyramid_data_path: Path, level: int = 0, column: int = 0, expected_tile_name: str = "tile_0.tif"):
     """ Get the first tile image from the pyramid data path."""
-    
+
     lvl_path = pyramid_data_path.joinpath(f"l_{level}", f"c_{column}")
     tile_path = lvl_path.joinpath(expected_tile_name)
     tile_img = iio.imread(tile_path)
@@ -57,12 +58,13 @@ def get_first_tile(pyramid_data_path: Path, level: int = 0, column: int = 0, exp
 
 def get_channel_name(image_pyramid: Path, params_file: str = "MultiChannelParams.xml"):
     """ Get the channel name from the MultiChannelParams.xml file in the image pyramid folder."""
-    
+
     with open(image_pyramid.joinpath(params_file), "rb") as f:
         multichannel_dict = xmltodict.parse(f, xml_attribs=True)
 
     ch_name = multichannel_dict["MultiChannelParameters"]["Channel"]["Name"]
     return ch_name
+
 
 class PyramidMetadata:
     def __init__(self, pyramid_dict, pyramid_path: Path):
@@ -70,7 +72,7 @@ class PyramidMetadata:
         self.height = int(pyramid_dict["root"]["imageset"]["@height"])
         self.width = int(pyramid_dict["root"]["imageset"]["@width"])
         self.overlap = int(pyramid_dict["root"]["imageset"]["@tileOverlap"])
-        assert(self.overlap == 0), "Currently only non-overlapping tiles are supported"
+        assert (self.overlap == 0), "Currently only non-overlapping tiles are supported"
         self.res_step = float(pyramid_dict["root"]["imageset"]["@step"])
         self.tile_width = int(pyramid_dict["root"]["imageset"]["@tileWidth"])
         self.tile_height = int(pyramid_dict["root"]["imageset"]["@tileHeight"])
@@ -80,10 +82,10 @@ class PyramidMetadata:
         self.nr_rows = int(np.ceil(self.height / self.tile_height))
         self.nr_cols = int(np.ceil(self.width / self.tile_width))
         self.pyramid_path = pyramid_path
-    
+
         self.url = url_str
         self.level_dir_prefix, self.col_dir_prefix, self.row_image_name = url_str.split("/")
-        
+
 
 def read_pyramid_metadata(pyramid_data_path: Path, dict_file: str = "pyramid.xml") -> PyramidMetadata:
     """ Read the pyramid metadata from the pyramid.xml file in the pyramid data path.
@@ -102,7 +104,7 @@ def read_pyramid_metadata(pyramid_data_path: Path, dict_file: str = "pyramid.xml
 
 
 def get_col_df(col_folder: Path, pyramid_meta_data: PyramidMetadata, dtype) -> pd.DataFrame:
-    
+
     c_name = col_folder.name
     col_tiles = [f for f in col_folder.iterdir() if f.is_file and f.name.endswith('.tif')]
 
@@ -167,16 +169,15 @@ def store_zarr_image(output_dir: Path, img_id: str, pyramid_meta_data: PyramidMe
             remove_if_exists (bool): Whether to remove the existing OME-Zarr file if it exists.
     """
     z0_path = output_dir.joinpath(f"./{img_id}.zarr")
-    
+
     if z0_path.exists():
         if remove_if_exists:
             rm_tree(z0_path)
         else:
             raise FileExistsError(f"The path {z0_path} already exists. Set remove_if_exists to True to remove it.")
-            
 
     store = zarr.storage.LocalStore(z0_path)
-    
+
     chunk_size_width = pyramid_meta_data.tile_width
     chunk_size_height = pyramid_meta_data.tile_height
     total_col = pyramid_meta_data.nr_cols * pyramid_meta_data.tile_width
@@ -189,10 +190,8 @@ def store_zarr_image(output_dir: Path, img_id: str, pyramid_meta_data: PyramidMe
         dtype=res_dtype,
     )
 
-    
-
     level_dir_path_str = string_utils.format_by_order(pyramid_meta_data.level_dir_prefix, [pyramid_meta_data.n_lvl - 1])
-    
+
     level_path = pyramid_meta_data.pyramid_path.joinpath(level_dir_path_str)
     for col in range(pyramid_meta_data.nr_cols):
         col_dir_path_str = string_utils.format_by_order(pyramid_meta_data.col_dir_prefix, [col])
@@ -210,31 +209,31 @@ def store_zarr_image(output_dir: Path, img_id: str, pyramid_meta_data: PyramidMe
 
 # it is still not quite clear to me why, but we need to rechunk de data at this stage
 # if not zarr writting later on will fail
-    d0 = da.from_zarr(store).rechunk(chunk_size_height,chunk_size_width)
-    d1 = da.coarsen(mean_dtype, d0, {0:2,1:2}).rechunk(int(chunk_size_height/2),int(chunk_size_width/2))
-    d2 = da.coarsen(mean_dtype, d0, {0:4,1:4}).rechunk(int(chunk_size_height/2),int(chunk_size_width/2))
-    d3 = da.coarsen(mean_dtype, d0, {0:8,1:8}).rechunk(int(chunk_size_height/2),int(chunk_size_width/2))
+    d0 = da.from_zarr(store).rechunk(chunk_size_height, chunk_size_width)
+    d1 = da.coarsen(mean_dtype, d0, {0: 2, 1: 2}).rechunk(int(chunk_size_height / 2), int(chunk_size_width / 2))
+    d2 = da.coarsen(mean_dtype, d0, {0: 4, 1: 4}).rechunk(int(chunk_size_height / 2), int(chunk_size_width / 2))
+    d3 = da.coarsen(mean_dtype, d0, {0: 8, 1: 8}).rechunk(int(chunk_size_height / 2), int(chunk_size_width / 2))
 
-# I can probably build this programmatically, for the moment I take a shortcut. 
+# I can probably build this programmatically, for the moment I take a shortcut.
 # This assumes an image with full resolution and one downscale by 2x2
 # here I assume that the original scale was in m but I am not sure
 
     initial_pix_size = float(pyramid_meta_data.pix_size_x) / 1e-9
     initial_pix_unit = 'nanometer'
     coordtfs = [
-            [{'type': 'scale', 'scale': [initial_pix_size,initial_pix_size]},
+            [{'type': 'scale', 'scale': [initial_pix_size, initial_pix_size]},
             {'type': 'translation', 'translation': [0, 0]}],
-            [{'type': 'scale', 'scale': [initial_pix_size*2,initial_pix_size*2]},
+            [{'type': 'scale', 'scale': [initial_pix_size * 2, initial_pix_size * 2]},
             {'type': 'translation', 'translation': [0, 0]}],
-            [{'type': 'scale', 'scale': [initial_pix_size*4,initial_pix_size*4]},
+            [{'type': 'scale', 'scale': [initial_pix_size * 4, initial_pix_size * 4]},
             {'type': 'translation', 'translation': [0, 0]}],
-            [{'type': 'scale', 'scale': [initial_pix_size*8,initial_pix_size*8]},
+            [{'type': 'scale', 'scale': [initial_pix_size * 8, initial_pix_size * 8]},
             {'type': 'translation', 'translation': [0, 0]}],
             ]
     axes = [{'name': 'y', 'type': 'space', 'unit': initial_pix_unit},
             {'name': 'x', 'type': 'space', 'unit': initial_pix_unit}]
 
-    path = output_dir / (img_id+"-ome.zarr")
+    path = output_dir / (img_id + "-ome.zarr")
 
     if path.exists():
         rm_tree(path)
@@ -242,7 +241,7 @@ def store_zarr_image(output_dir: Path, img_id: str, pyramid_meta_data: PyramidMe
     zarr_loc = parse_url(path, mode='w')
     if zarr_loc is None:
         raise FileNotFoundError(f"Could not create zarr location at path: {path}")
-    
+
     store = zarr_loc.store
     root = zarr.group(store=store)
 
