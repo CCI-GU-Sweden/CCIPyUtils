@@ -17,9 +17,41 @@ dependencies = [
             'zeroc-ice @ https://github.com/glencoesoftware/zeroc-ice-py-linux-x86_64/releases/download/20240202/zeroc_ice-3.6.5-cp312-cp312-win_amd64_2_28_x86_64.whl ; platform_system == "Windows" and platform_machine == "AMD64" and python_version =="3.12"',
             'zeroc-ice @ https://github.com/glencoesoftware/zeroc-ice-py-linux-x86_64/releases/download/20240202/zeroc_ice-3.6.5-cp312-cp312-macosx_11_0_x86_64.whl ; platform_system == "Darwin" and platform_machine == "x86_64" and python_version == "3.12"',
             'zeroc-ice==3.6.5 ; platform_machine != "x86_64"',
-            'omero-py==5.21.2'
+            'omero-py==5.21.2',
+            'ccipy-utils'
+
             ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["ccipy.omero*"]
+
+# ---------------------------------
+# Ruff configuration inside pyproject
+# ---------------------------------
+[tool.ruff]
+fix = false #disable autofix
+line-length = 120
+target-version = "py312"
+
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "env",
+]
+
+# --- Linting (PEP8, pyflakes, naming, etc.) ---
+[tool.ruff.lint]
+select = ["E", "W", "F", "N"]
+ignore = ["E501"]             # ignore long-line rule
+preview = true               # optional
+
+
+# --- Format section (Ruff formatter) ---
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false

@@ -59,6 +59,10 @@ class CCILogger:
     @classmethod
     def setup_logger(cls, log_file_name: str, app_name: str, level=logging.DEBUG):
 
+        if cls._logger is not None:
+            cls.info("Logger already setup and ready to go!")
+            return
+
         # check logfile existance
         if not Path(log_file_name).is_file():
             Path(log_file_name).parent.mkdir(parents=True, exist_ok=True)
