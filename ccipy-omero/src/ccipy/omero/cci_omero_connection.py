@@ -2,6 +2,7 @@ from threading import Lock
 import omero
 import omero.rtypes
 from omero.gateway import BlitzGateway, CommentAnnotationWrapper, DatasetWrapper, ImageWrapper
+from omero.model import Roi
 from ccipy.utils.cci_logger import CCILogger
 
 
@@ -191,3 +192,8 @@ class OmeroConnection:
             comment_ann.setValue(comment)
             comment_ann.save()
             image.linkAnnotation(comment_ann)
+
+    def get_rois_for_image(self, image_id: int) -> list[Roi]:
+        with self._mutex:
+            rois = self.conn.getRoiService().findByImage(image_id, None)
+        return rois.rois if rois is not None else []
