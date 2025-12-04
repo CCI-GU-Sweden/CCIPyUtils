@@ -1,7 +1,7 @@
 from pathlib import Path
 from PySide6.QtCore import QAbstractItemModel, QModelIndex, QPersistentModelIndex, Qt
 from PySide6.QtXml import QDomDocument, QDomNode, QDomElement
-
+from typing import Self
 
 SESSION_TAG_NAME = "BioSemSession"
 NAME_TAG_NAME = "Name"
@@ -31,6 +31,28 @@ class CCIAtlasDomItem:
             self.children.append(CCIAtlasDomItem(child, len(self.children), self))
             child = child.nextSibling()
 
+    def insert_child_node_tree(self, child_node: QDomNode, add_node_to_dom: bool = False):
+
+        if child_node is None:
+            return
+
+        if add_node_to_dom:
+            self.node.appendChild(child_node)
+            
+        self.children.append(CCIAtlasDomItem(child_node, len(self.children), self))
+        
+        # child = child_node.firstChild()
+        # if child.nodeType() == QDomNode.TextNode:  # type: ignore
+        #     self.text = child.toText().data()
+        #     return
+
+        # while not child.isNull():
+        #     self.children.append(CCIAtlasDomItem(child, len(self.children), self))
+        #     child = child.nextSibling()
+
+    # def insert_child_item_tree(self, root: Self, add_node_to_dom: bool = False):  # type: ignore # noqa: F821
+    #     self.insert_child_node_tree(root.node)
+
     def child(self, row: int):
         if row < 0 or row >= len(self.children):
             return None
@@ -44,6 +66,9 @@ class CCIAtlasDomItem:
 
     def get_node_text(self) -> str:
         return self.text
+    
+    def get_nr_of_children(self) -> int:
+        return len(self.children)
 
 
 class CCIAtlasDomModel(QAbstractItemModel):
@@ -123,7 +148,7 @@ class CCIAtlasDomModel(QAbstractItemModel):
 
         return None
 
-    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: N802
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             return ["Name", "Value"][section]
         return None
@@ -159,27 +184,27 @@ class CCIAtlasDomModel(QAbstractItemModel):
             self.set_anchor(name, hits[0])
         return hits[0] if hits else QModelIndex()
 
-    def node_from_index(self, index: QModelIndex) -> QDomNode:
-        """Get the QDomNode for a given QModelIndex."""
-        if not index.isValid():
-            return self.dom_document.documentElement()
+    # def node_from_index(self, index: QModelIndex) -> QDomNode:
+    #     """Get the QDomNode for a given QModelIndex."""
+    #     if not index.isValid():
+    #         return self.dom_document.documentElement()
 
-        item: CCIAtlasDomItem = index.internalPointer()
-        return item.node
+    #     item: CCIAtlasDomItem = index.internalPointer()
+    #     return item.node
 
     def insert_node(self, parent_index: QModelIndex, dom_node: QDomNode) -> bool:
         """Insert an existing QDomNode (with its children) under parent_index at row."""
-        parent_node = self.node_from_index(parent_index)
+        parent_item = parent_index.internalPointer()
 
         # Ensure node belongs to this document
         if dom_node.ownerDocument() != self.dom_document:
             dom_node = self.dom_document.importNode(dom_node, True)  # deep copy, keeps children
 
-        row = parent_node.childNodes().length()
+        row = parent_item.get_nr_of_children()
 
         self.beginInsertRows(parent_index, row, row)
 
-        parent_node.appendChild(dom_node)
+        parent_item.insert_child_node_tree(dom_node, True)
 
         self.endInsertRows()
         return True
