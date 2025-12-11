@@ -63,9 +63,13 @@ class CCIAtlasXmlItem:
 
     def get_node_name(self) -> str:
         return self.node.nodeName()
-
+    
     def get_node_text(self) -> str:
         return self.text
+    
+    def set_node_text(self, val):
+        self.text = val
+        self.node.setNodeValue(val)
     
     def get_nr_of_children(self) -> int:
         return len(self.children)
@@ -139,6 +143,17 @@ class CCIAtlasXmlModel(QAbstractItemModel):
             return item.get_node_text()
 
         return None
+
+    def setData(self, index: QModelIndex | QPersistentModelIndex, value, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> str | None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        if not index.isValid():
+            return None
+
+        item: CCIAtlasXmlItem = index.internalPointer()
+
+        if index.column() == 1:
+            item.set_node_text(value)
+        
+        self.dataChanged.emit(index, index, [value])
 
     def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: N802
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:

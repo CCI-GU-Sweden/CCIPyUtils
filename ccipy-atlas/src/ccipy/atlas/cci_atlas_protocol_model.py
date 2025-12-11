@@ -32,8 +32,8 @@ class CCIAtlasProtocolModel(CCIAtlasXmlModel):
             uid_index = self.find_index_by_name("UID", parent=protocol_item_index)
             
             if name_index.isValid() and uid_index.isValid():
-                name = self.data(self.index(name_index.row(),1,protocol_item_index))
-                uid = self.data(self.index(uid_index.row(),1,protocol_item_index))
+                name = self.data(self.index(name_index.row(), 1, protocol_item_index))
+                uid = self.data(self.index(uid_index.row(), 1, protocol_item_index))
                 if name and uid:
                     protocols.append((name, uid))
         
@@ -50,7 +50,7 @@ class CCIAtlasProtocolModel(CCIAtlasXmlModel):
             protocol_item_index = self.index(row, 0, protocol_index)
             #name_index = self.find_index_by_name("Name", parent=protocol_item_index)
             # uid_index = self.find_index_by_name("UID", parent=protocol_item_index)
-            uid_value_index = self.find_index_by_data(uid,protocol_item_index)
+            uid_value_index = self.find_index_by_data(uid, protocol_item_index)
             
             if uid_value_index.isValid():
                 return self.get_node(index=protocol_item_index)

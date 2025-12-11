@@ -84,9 +84,24 @@ class CCIAtlasDomModel(CCIAtlasXmlModel):
     #####################################################################
     # cool methods below
     #####################################################################
-    def get_document(self) -> QDomDocument:
-        return self.dom_document
-
+    def update_name(self, proj_name: str):
+        biosem_idx = self.find_index_by_name("BioSemProject")
+        if not biosem_idx.isValid():
+            return
+        
+        proj_name_idx = self.find_index_by_name("Name", parent=biosem_idx)
+        xml_file_idx = self.find_index_by_name("XMLFile", parent=biosem_idx)
+        data_folder_idx = self.find_index_by_name("DataFolder", parent=biosem_idx)
+        
+        if proj_name_idx.isValid():
+            self.setData(self.index(proj_name_idx.row(), 1, biosem_idx), proj_name)
+        
+        if xml_file_idx.isValid():
+            self.setData(self.index(xml_file_idx.row(), 1, biosem_idx), proj_name)
+        
+        if data_folder_idx.isValid():
+            self.setData(self.index(data_folder_idx.row(), 1, biosem_idx), proj_name.split('.')[0] + "_data")
+        
     def add_atlas_region(self, node: QDomNode) -> bool:
         atlas_index = self.find_index_by_name("RegionSet", store_anchor=True)
         if not atlas_index.isValid():
