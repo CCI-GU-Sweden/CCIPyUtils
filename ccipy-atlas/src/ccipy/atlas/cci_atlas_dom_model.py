@@ -1,7 +1,7 @@
 from pathlib import Path
-from PySide6.QtCore import QAbstractItemModel, QModelIndex, QPersistentModelIndex, Qt
-from PySide6.QtXml import QDomDocument, QDomNode, QDomElement
+from PySide6.QtXml import QDomDocument, QDomNode
 from typing import Self
+from ccipy.atlas.cci_atlas_xml_model import CCIAtlasXmlModel
 
 SESSION_TAG_NAME = "BioSemSession"
 NAME_TAG_NAME = "Name"
@@ -10,148 +10,76 @@ DATA_FOLDER_TAG_NAME = "DataFolder"
 ORDERED_DATASET_TAG_NAME = "OrderedDataSet"
 
 
-class CCIAtlasDomItem:
-    """Wrapper for QDomNode that tracks parent/child relationships"""
-    def __init__(self, node: QDomNode, row: int = -10, parent=None):
-        self.node: QDomNode = node
-        self.parent = parent
-        self.row_number = row
-        self.children = []
-        self.text = ""
+# class CCIAtlasDomItem:
+#     """Wrapper for QDomNode that tracks parent/child relationships"""
+#     def __init__(self, node: QDomNode, row: int = -10, parent=None):
+#         self.node: QDomNode = node
+#         self.parent = parent
+#         self.row_number = row
+#         self.children = []
+#         self.text = ""
 
-        if node is None:
-            return
-        # Preload children
-        child = node.firstChild()
-        if child.nodeType() == QDomNode.TextNode:
-            self.text = child.toText().data()
-            return
+#         if node is None:
+#             return
+#         # Preload children
+#         child = node.firstChild()
+#         if child.nodeType() == QDomNode.TextNode:
+#             self.text = child.toText().data()
+#             return
 
-        while not child.isNull():
-            self.children.append(CCIAtlasDomItem(child, len(self.children), self))
-            child = child.nextSibling()
+#         while not child.isNull():
+#             self.children.append(CCIAtlasDomItem(child, len(self.children), self))
+#             child = child.nextSibling()
 
-    def insert_child_node_tree(self, child_node: QDomNode, add_node_to_dom: bool = False):
+#     def insert_child_node_tree(self, child_node: QDomNode, add_node_to_dom: bool = False):
 
-        if child_node is None:
-            return
+#         if child_node is None:
+#             return
 
-        if add_node_to_dom:
-            self.node.appendChild(child_node)
+#         if add_node_to_dom:
+#             self.node.appendChild(child_node)
             
-        self.children.append(CCIAtlasDomItem(child_node, len(self.children), self))
+#         self.children.append(CCIAtlasDomItem(child_node, len(self.children), self))
         
-        # child = child_node.firstChild()
-        # if child.nodeType() == QDomNode.TextNode:  # type: ignore
-        #     self.text = child.toText().data()
-        #     return
+#         # child = child_node.firstChild()
+#         # if child.nodeType() == QDomNode.TextNode:  # type: ignore
+#         #     self.text = child.toText().data()
+#         #     return
 
-        # while not child.isNull():
-        #     self.children.append(CCIAtlasDomItem(child, len(self.children), self))
-        #     child = child.nextSibling()
+#         # while not child.isNull():
+#         #     self.children.append(CCIAtlasDomItem(child, len(self.children), self))
+#         #     child = child.nextSibling()
 
-    # def insert_child_item_tree(self, root: Self, add_node_to_dom: bool = False):  # type: ignore # noqa: F821
-    #     self.insert_child_node_tree(root.node)
+#     # def insert_child_item_tree(self, root: Self, add_node_to_dom: bool = False):  # type: ignore # noqa: F821
+#     #     self.insert_child_node_tree(root.node)
 
-    def child(self, row: int):
-        if row < 0 or row >= len(self.children):
-            return None
-        return self.children[row]
+#     def child(self, row: int):
+#         if row < 0 or row >= len(self.children):
+#             return None
+#         return self.children[row]
 
-    def row(self):
-        return self.row_number
+#     def row(self):
+#         return self.row_number
 
-    def get_node_name(self) -> str:
-        return self.node.nodeName()
+#     def get_node_name(self) -> str:
+#         return self.node.nodeName()
 
-    def get_node_text(self) -> str:
-        return self.text
+#     def get_node_text(self) -> str:
+#         return self.text
     
-    def get_nr_of_children(self) -> int:
-        return len(self.children)
+#     def get_nr_of_children(self) -> int:
+#         return len(self.children)
 
 
-class CCIAtlasDomModel(QAbstractItemModel):
+class CCIAtlasDomModel(CCIAtlasXmlModel):
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.dom_document: QDomDocument = QDomDocument()
-        self.root_item: CCIAtlasDomItem | None = None
-        self.root_element: QDomElement = QDomElement()
         self.base_folder: Path = Path()
-        self._anchors: dict[str, QPersistentModelIndex] = {}
 
-    def load_from_dom(self, atlas_dom_document: QDomDocument, base_folder: str):
-        self.dom_document: QDomDocument = atlas_dom_document
-        self.root_item = CCIAtlasDomItem(atlas_dom_document.documentElement(), 0)
-        self.root_element = atlas_dom_document.documentElement()
+    def load_from_dom(self, atlas_dom_document: QDomDocument, base_folder: str):  # pyright: ignore[reportIncompatibleMethodOverride]
+        super().load_from_dom(atlas_dom_document)
         self.base_folder = Path(base_folder)
-        self.dataChanged.emit(self.index(0, 0), self.index(self.rowCount() - 1, self.columnCount() - 1))
-
-    def parent(self, child: QModelIndex | QPersistentModelIndex = QModelIndex()) -> QModelIndex:  # pyright: ignore[reportIncompatibleMethodOverride]
-        if not child.isValid():
-            return QModelIndex()
-
-        child_item = child.internalPointer()
-        parent_item = child_item.parent
-
-        if parent_item == self.root_item or not parent_item:
-            return QModelIndex()
-
-        return self.createIndex(parent_item.row(), 0, parent_item)
-
-    def columnCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()):
-        return 2  # Name, Attributes, Value
-
-    def rowCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()):
-        if not parent.isValid():
-            parent_item = self.root_item
-        else:
-            parent_item = parent.internalPointer()
-
-        if not parent_item:
-            return 0
-
-        return len(parent_item.children)
-
-    def index(self, row: int, column: int, parent: QModelIndex | QPersistentModelIndex = QModelIndex()):
-        if not self.hasIndex(row, column, parent):
-            return QModelIndex()
-
-        parent_item = self.root_item if not parent.isValid() else parent.internalPointer()
-        if not parent_item:
-            return QModelIndex()
-
-        child_item = parent_item.child(row)
-
-        if child_item:
-            return self.createIndex(row, column, child_item)
-
-        return QModelIndex()
-
-    def data(self, index: QModelIndex | QPersistentModelIndex = QModelIndex(), role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole):  # pyright: ignore[reportIncompatibleMethodOverride]
-
-        if not index.isValid() or role != Qt.ItemDataRole.DisplayRole:
-            return None
-
-        item: CCIAtlasDomItem = index.internalPointer()
-
-        if index.column() == 0:
-            return item.get_node_name()
-        elif index.column() == 1:
-            #     if node.isElement():
-            #         attrs = node.toElement().attributes()
-            #         return ' '.join([f'{attrs.item(i).nodeName()}="{attrs.item(i).nodeValue()}"'
-            #                        for i in range(attrs.count())])
-            #        elif index.column() == 2:
-            return item.get_node_text()
-
-        return None
-
-    def headerData(self, section, orientation, role=Qt.ItemDataRole.DisplayRole):  # pyright: ignore[reportIncompatibleMethodOverride]  # noqa: N802
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
-            return ["Name", "Value"][section]
-        return None
 
     #####################################################################
     # cool methods below
@@ -168,76 +96,6 @@ class CCIAtlasDomModel(QAbstractItemModel):
 
     def get_region_set_index(self):
         return self.find_index_by_name("RegionSet", store_anchor=True)
-
-    def find_index_by_name(self, name: str, store_anchor: bool = False, column=0) -> QModelIndex:
-        if self.rowCount(QModelIndex()) == 0:
-            return QModelIndex()
-
-        if name in self._anchors:
-            return self.anchor_index(name)
-
-        # Start from the very first root index; MatchRecursive walks the whole tree
-        start = self.index(0, column, QModelIndex())
-        hits = self.match(start, Qt.DisplayRole, name, hits=1,
-                        flags=Qt.MatchExactly | Qt.MatchRecursive)
-        if store_anchor and hits:
-            self.set_anchor(name, hits[0])
-        return hits[0] if hits else QModelIndex()
-
-    # def node_from_index(self, index: QModelIndex) -> QDomNode:
-    #     """Get the QDomNode for a given QModelIndex."""
-    #     if not index.isValid():
-    #         return self.dom_document.documentElement()
-
-    #     item: CCIAtlasDomItem = index.internalPointer()
-    #     return item.node
-
-    def insert_node(self, parent_index: QModelIndex, dom_node: QDomNode) -> bool:
-        """Insert an existing QDomNode (with its children) under parent_index at row."""
-        parent_item = parent_index.internalPointer()
-
-        # Ensure node belongs to this document
-        if dom_node.ownerDocument() != self.dom_document:
-            dom_node = self.dom_document.importNode(dom_node, True)  # deep copy, keeps children
-
-        row = parent_item.get_nr_of_children()
-
-        self.beginInsertRows(parent_index, row, row)
-
-        parent_item.insert_child_node_tree(dom_node, True)
-
-        self.endInsertRows()
-        return True
-
-    def set_anchor(self, name: str, index: QModelIndex) -> None:
-        """
-        Store a persistent index under the given name.
-        If index is invalid, remove the anchor for that name.
-        """
-        if not index.isValid():
-            # Treat setting an invalid index as "remove this anchor"
-            self._anchors.pop(name, None)
-            return
-
-        self._anchors[name] = QPersistentModelIndex(index)
-
-    def anchor_index(self, name: str) -> QModelIndex:
-        """
-        Return the (normal) QModelIndex for a stored anchor name,
-        or an invalid QModelIndex if not found / no longer valid.
-        """
-        pidx = self._anchors.get(name)
-        if pidx is None or not pidx.isValid():
-            # Clean up dead anchor if needed
-            self._anchors.pop(name, None)
-            return QModelIndex()
-
-        # In PySide/PyQt, QPersistentModelIndex is usually usable directly
-        # as a QModelIndex, but returning it as QModelIndex is explicit:
-        return QModelIndex(pidx)
-
-    def remove_anchor(self, name: str) -> None:
-        self._anchors.pop(name, None)
 
     # def getSessionByName()
 
@@ -279,3 +137,10 @@ class CCIAtlasDomModel(QAbstractItemModel):
                 ods.append(od_name.text())
 
         return ods
+    
+    def add_protocol(self, protocol_node: QDomNode) -> bool:
+        protocols_index = self.find_index_by_name("ProtocolCache", store_anchor=False)
+        if not protocols_index.isValid():
+            return False
+
+        return self.insert_node(protocols_index, protocol_node)

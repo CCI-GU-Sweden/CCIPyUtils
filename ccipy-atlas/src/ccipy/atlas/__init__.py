@@ -1,1 +1,2 @@
 from ccipy.atlas.cci_atlas_dom_model import CCIAtlasDomModel as CCIAtlasDomModel
+from ccipy.atlas.cci_atlas_protocol_model import CCIAtlasProtocolModel as CCIAtlasProtocolModel
