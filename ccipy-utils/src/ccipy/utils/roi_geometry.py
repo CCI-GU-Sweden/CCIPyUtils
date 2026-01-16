@@ -33,16 +33,40 @@ class RoiRectangle(RoiGeometry):
         self.y = y
         self.width = width
         self.height = height
-        
+
+    @staticmethod
+    def from_normalized_xyxy(x1_norm: float, y1_norm: float, x2_norm: float, y2_norm: float, image_width: int, image_height: int, color: int = Colors.WHITE, text: str = "") -> 'RoiRectangle':
+        #
+        # Create RoiRectangle from normalized (0..1) xyxy coordinates
+        #
+        x1 = x1_norm * image_width
+        y1 = y1_norm * image_height
+        x2 = x2_norm * image_width
+        y2 = y2_norm * image_height
+        width = x2 - x1
+        height = y2 - y1
+        return RoiRectangle(x1, y1, width, height, color, text)
+
+    @staticmethod
+    def from_normalized_xywh(x_norm: float, y_norm: float, width_norm: float, height_norm: float, image_width: int, image_height: int, color: int = Colors.WHITE, text: str = "") -> 'RoiRectangle':
+        #
+        # Create RoiRectangle from normalized (0..1) xywh coordinates where x and y are top-left corner
+        #
+        x = x_norm * image_width
+        y = y_norm * image_height
+        width = width_norm * image_width
+        height = height_norm * image_height
+        return RoiRectangle(x, y, width, height, color, text)
+    
     def get_point_list(self) -> list[RoiPoint]:
-        half_w = self.width / 2
-        half_h = self.height / 2
+        #half_w = self.width / 2
+        #half_h = self.height / 2
 
         return [
-            RoiPoint(self.x - half_w, self.y - half_h),  # top-left
-            RoiPoint(self.x + half_w, self.y - half_h),  # top-right
-            RoiPoint(self.x + half_w, self.y + half_h),  # bottom-right
-            RoiPoint(self.x - half_w, self.y + half_h),  # bottom-left
+            RoiPoint(self.x, self.y),  # top-left
+            RoiPoint(self.x + self.width, self.y),  # top-right
+            RoiPoint(self.x + self.width, self.y + self.height),  # bottom-right
+            RoiPoint(self.x, self.y + self.height),  # bottom-left
         ]
         
         
@@ -57,6 +81,7 @@ class RoiEllipse(RoiGeometry):
         
     def get_point_list(self, num_points: int = 36) -> list[RoiPoint]:
 
+        # TODO: Double check that the roi from omera is centered!!!
         points = []
         rx = self.width / 2
         ry = self.height / 2

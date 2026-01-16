@@ -13,7 +13,7 @@ def rgb_color(r: int, g: int, b: int, a: int = 255) -> int:
     """
     if not all(0 <= v <= 255 for v in (r, g, b, a)):
         raise ValueError("RGBA components must be in 0..255")
-    return (a << 24) | (r << 16) | (g << 8) | b
+    return (r << 24) | (g << 16) | (b << 8) | a
 
 
 color_type = int
