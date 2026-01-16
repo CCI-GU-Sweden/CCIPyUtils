@@ -33,7 +33,6 @@ def create_training_set(path_to_images: Path, path_to_vectors: Path, destination
     label_vectors = sorted([str(p) for p in path_to_vectors.iterdir() if p.suffix.lower() in vec_exts])
 
     #sort lists here!!!
-    
 
     for idx, img in enumerate(images):
         if idx % 2 == 0:

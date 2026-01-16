@@ -7,7 +7,7 @@ from ultralytics import YOLO
 
 class CCIYoloWrapper:
 
-    def __init__(self, model_name_or_path: str = "yolov8n-seg.pt"):
+    def __init__(self, model_name_or_path: str = "yolov8n.pt"):
         self.model_name = ""
         self.res = None
         self.model = YOLO(model_name_or_path)

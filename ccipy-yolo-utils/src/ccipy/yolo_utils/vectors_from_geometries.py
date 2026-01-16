@@ -49,7 +49,10 @@ def geometries_to_vectors_normalized(geometries: list[RoiGeometry], image_width:
     vectors = []
     for geometry in geometries:
         
-        class_type = geometry_to_class(geometry)
+        try:
+            class_type = geometry_to_class(geometry)
+        except Exception:
+            raise
         points = []
         match geometry:
             case RoiRectangle():
@@ -65,7 +68,7 @@ def geometries_to_vectors_normalized(geometries: list[RoiGeometry], image_width:
                 continue  # Unsupported geometry type
             
         vector = [(point.x / image_width, point.y / image_height) for point in points]
-        vector.append(vector[0])  # Close the shape by appending the first point at the end
+        #vector.append(vector[0])  # Close the shape by appending the first point at the end
         vectors.append((class_type, vector))
 
     return vectors
