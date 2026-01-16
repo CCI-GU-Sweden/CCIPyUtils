@@ -6,7 +6,7 @@ from ccipy.omero.cci_omero_connection import OmeroConnection
 from ccipy.utils.cci_logger import CCILogger
 from omero.gateway import DatasetWrapper, MapAnnotationWrapper, CommentAnnotationWrapper, TagAnnotationWrapper
 from ccipy.omero.exceptions.exceptions import OmeroObjectNotFoundError
-from omero.model import Roi
+from omero.model import RoiI, Shape, Roi
 
 
 DATE_TIME_FMT = "%Y-%m-%d %H:%M:%S"
@@ -242,6 +242,19 @@ class OmeroGetterCtx:
                 tags.append(ann.getValue())
 
         return tags
+
+    def set_rois_on_image(self, image_id: int, shapes: list[Shape]):
+        us = self.conn.get_update_service()
+        ids = []
+        image = self.conn.get_image(image_id)
+        for shape in shapes:
+            roi = RoiI()
+            roi.setImage(image._obj)  # pyright: ignore[reportPrivateUsage]
+            roi.addShape(shape)  # pyright: ignore[reportPrivateUsage]
+            roi_id = us.saveAndReturnObject(roi)
+            ids.append(roi_id.getId().getValue())
+
+        return ids
 
     def set_annotation_on_image(self, image, tag_value):
         tag_ann = self.get_tag_annotation(tag_value)

@@ -198,3 +198,7 @@ class OmeroConnection:
     def get_roi_service(self):
         with self._mutex:
             return self.conn.getRoiService()
+
+    def get_update_service(self):
+        with self._mutex:
+            return self.conn.getUpdateService()

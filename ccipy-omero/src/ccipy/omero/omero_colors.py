@@ -13,6 +13,8 @@ channel.setColor(as_rint(Colors.RED))
 
 from __future__ import annotations
 from ccipy.utils.cci_colors import rgb_color
+from omero.rtypes import rint
+
 
 # ---------------------------------------------------------------------------
 # Core helpers
@@ -43,11 +45,17 @@ def hex_to_omero(hex_color: str, alpha: int = 255) -> int:
     return rgb_color(r, g, b, a=alpha)
 
 
+def cci_color_to_omero_rint_color(color: int) -> rint:
+    return as_rint(color)
+
+
 def as_rint(argb: int):
     """
     Wrap an OMERO ARGB int as omero.rtypes.rint, ready for setColor().
     """
-    from omero.rtypes import rint  # lazy import so this module doesn't require OMERO at import time
+    
+    if argb >= 2**31:
+        argb -= 2**32
 
     return rint(argb)
 
@@ -63,11 +71,22 @@ def omero_rint_to_rgba(color_rint):
     except AttributeError:
         argb = color_rint
 
-    a = (argb >> 24) & 0xFF
-    r = (argb >> 16) & 0xFF
-    g = (argb >> 8) & 0xFF
-    b = argb & 0xFF
+    r = (argb >> 24) & 0xFF
+    g = (argb >> 16) & 0xFF
+    b = (argb >> 8) & 0xFF
+    a = argb & 0xFF
     return r, g, b, a
+
+
+def omero_rgb_to_rint(r: int, g: int, b: int):
+    """Convert RGB components to an OMERO rint color (with alpha=255)."""
+    return omero_rgba_to_rint(r, g, b, 255)
+
+
+def omero_rgba_to_rint(r: int, g: int, b: int, a: int = 255):
+    """Convert RGBA components to an OMERO rint color."""
+    argb = (r << 24) | (g << 16) | (b << 8) | a
+    return as_rint(argb)
 
 
 def omero_rint_to_rgb(color_rint):
