@@ -1,6 +1,7 @@
 from pathlib import Path
 from PySide6.QtXml import QDomDocument, QDomNode
-from typing import Self
+from PySide6.QtCore import QModelIndex
+from typing import Self, List
 from ccipy.atlas.cci_atlas_xml_model import CCIAtlasXmlModel
 
 SESSION_TAG_NAME = "BioSemSession"
@@ -8,67 +9,6 @@ NAME_TAG_NAME = "Name"
 UID_TAG_NAME = "UID"
 DATA_FOLDER_TAG_NAME = "DataFolder"
 ORDERED_DATASET_TAG_NAME = "OrderedDataSet"
-
-
-# class CCIAtlasDomItem:
-#     """Wrapper for QDomNode that tracks parent/child relationships"""
-#     def __init__(self, node: QDomNode, row: int = -10, parent=None):
-#         self.node: QDomNode = node
-#         self.parent = parent
-#         self.row_number = row
-#         self.children = []
-#         self.text = ""
-
-#         if node is None:
-#             return
-#         # Preload children
-#         child = node.firstChild()
-#         if child.nodeType() == QDomNode.TextNode:
-#             self.text = child.toText().data()
-#             return
-
-#         while not child.isNull():
-#             self.children.append(CCIAtlasDomItem(child, len(self.children), self))
-#             child = child.nextSibling()
-
-#     def insert_child_node_tree(self, child_node: QDomNode, add_node_to_dom: bool = False):
-
-#         if child_node is None:
-#             return
-
-#         if add_node_to_dom:
-#             self.node.appendChild(child_node)
-            
-#         self.children.append(CCIAtlasDomItem(child_node, len(self.children), self))
-        
-#         # child = child_node.firstChild()
-#         # if child.nodeType() == QDomNode.TextNode:  # type: ignore
-#         #     self.text = child.toText().data()
-#         #     return
-
-#         # while not child.isNull():
-#         #     self.children.append(CCIAtlasDomItem(child, len(self.children), self))
-#         #     child = child.nextSibling()
-
-#     # def insert_child_item_tree(self, root: Self, add_node_to_dom: bool = False):  # type: ignore # noqa: F821
-#     #     self.insert_child_node_tree(root.node)
-
-#     def child(self, row: int):
-#         if row < 0 or row >= len(self.children):
-#             return None
-#         return self.children[row]
-
-#     def row(self):
-#         return self.row_number
-
-#     def get_node_name(self) -> str:
-#         return self.node.nodeName()
-
-#     def get_node_text(self) -> str:
-#         return self.text
-    
-#     def get_nr_of_children(self) -> int:
-#         return len(self.children)
 
 
 class CCIAtlasDomModel(CCIAtlasXmlModel):
@@ -80,6 +20,7 @@ class CCIAtlasDomModel(CCIAtlasXmlModel):
     def load_from_dom(self, atlas_dom_document: QDomDocument, base_folder: str):  # pyright: ignore[reportIncompatibleMethodOverride]
         super().load_from_dom(atlas_dom_document)
         self.base_folder = Path(base_folder)
+        self.data_folder_idx = self.find_index_by_name("DataFolder", store_anchor=True)
 
     #####################################################################
     # cool methods below
@@ -88,10 +29,10 @@ class CCIAtlasDomModel(CCIAtlasXmlModel):
         biosem_idx = self.find_index_by_name("BioSemProject")
         if not biosem_idx.isValid():
             return
-        
+         
         proj_name_idx = self.find_index_by_name("Name", parent=biosem_idx)
         xml_file_idx = self.find_index_by_name("XMLFile", parent=biosem_idx)
-        data_folder_idx = self.find_index_by_name("DataFolder", parent=biosem_idx)
+        #data_folder_idx = self.find_index_by_name("DataFolder", parent=biosem_idx)
         
         if proj_name_idx.isValid():
             self.setData(self.index(proj_name_idx.row(), 1, biosem_idx), proj_name)
@@ -99,8 +40,8 @@ class CCIAtlasDomModel(CCIAtlasXmlModel):
         if xml_file_idx.isValid():
             self.setData(self.index(xml_file_idx.row(), 1, biosem_idx), proj_name)
         
-        if data_folder_idx.isValid():
-            self.setData(self.index(data_folder_idx.row(), 1, biosem_idx), proj_name.split('.')[0] + "_data")
+        if self.data_folder_idx.isValid():
+            self.setData(self.index(self.data_folder_idx.row(), 1, biosem_idx), proj_name.split('.')[0] + "_data")
         
     def add_atlas_region(self, node: QDomNode) -> bool:
         atlas_index = self.find_index_by_name("RegionSet", store_anchor=True)
@@ -111,11 +52,23 @@ class CCIAtlasDomModel(CCIAtlasXmlModel):
 
     def get_region_set_index(self):
         return self.find_index_by_name("RegionSet", store_anchor=True)
-
+    
+    def get_data_set_index(self):
+        return self.find_index_by_name("DataSet", store_anchor=True)
+    
+    def get_atlas_region_indices(self)-> List[QModelIndex]:
+        
+        rs_idx = self.get_region_set_index()
+        return self.find_indices_by_name("AtlasRegion",rs_idx)
+    
     # def getSessionByName()
 
-    def get_base_folder(self):
+    def get_base_folder(self) -> Path:
         return self.base_folder
+
+    def get_imported_folder(self) -> Path:
+        data_folder_name = self.data_by_index_and_column(self.data_folder_idx, 1)
+        return self.base_folder / data_folder_name / "imported"
 
     def get_data_dir(self):
         # error handling?

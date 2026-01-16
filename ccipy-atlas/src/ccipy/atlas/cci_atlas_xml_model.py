@@ -166,7 +166,7 @@ class CCIAtlasXmlModel(QAbstractItemModel):
     def get_document(self) -> QDomDocument:
         return self.dom_document
 
-    def find_index_by_name(self, name: str, store_anchor: bool = False, parent=QModelIndex(), column=0) -> QModelIndex:
+    def find_index_by_name(self, name: str, parent=QModelIndex(), store_anchor: bool = False) -> QModelIndex:
         if name in self._anchors:
             return self.anchor_index(name)
 
@@ -177,7 +177,7 @@ class CCIAtlasXmlModel(QAbstractItemModel):
 
         return idx
 
-    def find_index_by_data(self, name: str, parent=QModelIndex(), column=0) -> QModelIndex:
+    def find_index_by_data(self, name: str, parent=QModelIndex()) -> QModelIndex:
 
         idx = self.find_index_by_column_data(name, 1, parent)
         return idx
@@ -200,6 +200,43 @@ class CCIAtlasXmlModel(QAbstractItemModel):
             return hits[0]
         
         return QModelIndex()
+
+    def find_indices_by_name(self, name: str, parent=QModelIndex(), store_anchor: bool = False) -> list[QModelIndex]:
+        return self.find_indices_by_column_data(name,0,parent)
+
+    def find_indices_by_column_data(self, data: str, column: int, parent=QModelIndex()) -> list[QModelIndex]:
+
+        hits = []
+
+        if column < 0 or column >= self.columnCount(parent):
+            return []
+
+        the_index = parent
+        if self.rowCount(the_index) == 0:
+            return []
+
+        # Start from the very first root index; MatchRecursive walks the whole tree
+        start = self.index(0, column, the_index)
+        hits = self.match(start, Qt.DisplayRole, data, hits=-1,
+                        flags=Qt.MatchExactly | Qt.MatchRecursive)
+
+        return hits
+        
+
+
+    def data_by_index_and_column(self, index: QModelIndex | QPersistentModelIndex = QModelIndex(), column: int = 0, role: Qt.ItemDataRole = Qt.ItemDataRole.DisplayRole) -> str | None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        if not index.isValid() or role != Qt.ItemDataRole.DisplayRole:
+            return None
+
+        item: CCIAtlasXmlItem = index.internalPointer()
+
+        if column == 0:
+            return item.get_node_name()
+        elif column == 1:
+            return item.get_node_text()
+
+        return None
+
 
     def insert_node(self, parent_index: QModelIndex, dom_node: QDomNode) -> bool:
         """Insert an existing QDomNode (with its children) under parent_index at row."""
@@ -255,3 +292,11 @@ class CCIAtlasXmlModel(QAbstractItemModel):
 
         item: CCIAtlasXmlItem = index.internalPointer()
         return item.node
+
+    def get_item(self, index: QModelIndex | QPersistentModelIndex) -> CCIAtlasXmlItem | None:
+
+        if not index.isValid():
+            return None
+
+        item: CCIAtlasXmlItem = index.internalPointer()
+        return item
