@@ -1,6 +1,7 @@
 from pathlib import Path
 from ccipy.utils.roi_geometry import RoiGeometry, RoiPoint, RoiRectangle, RoiEllipse, RoiPolygon
 from ccipy.yolo_utils.geometry_to_class import geometry_to_class_text_default, geometry_to_yolo_class
+from ccipy.utils.cci_logger import CCILogger
 
 
 def geometries_to_vectors(geometries: list[RoiGeometry], geometry_to_class: geometry_to_yolo_class = geometry_to_class_text_default) -> list[tuple[int, list[tuple[float, float]]]]:
@@ -52,7 +53,8 @@ def geometries_to_vectors_normalized(geometries: list[RoiGeometry], image_width:
         try:
             class_type = geometry_to_class(geometry)
         except Exception:
-            raise
+            CCILogger().warning(f"Could not map geometry to class: {geometry}. Skipping this geometry")
+            continue
         points = []
         match geometry:
             case RoiRectangle():
