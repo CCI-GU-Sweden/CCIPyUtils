@@ -24,7 +24,7 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["ccipy.utils.*", "ccipy.img_utils.*"]
+include = ["ccipy.utils*", "ccipy.img_utils*"]
 namespaces = true
 
 # ---------------------------------
