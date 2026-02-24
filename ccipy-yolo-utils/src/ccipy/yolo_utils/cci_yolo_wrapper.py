@@ -26,6 +26,6 @@ class CCIYoloWrapper:
     def predict(self, img):
         return self.model(img)
 
-    def train(self, data_set_file: Path, image_size, batch=8, epochs=300, patience=100, project=".", ** kwargs):
-        self.res = self.model.train(data=data_set_file, batch=batch, imgsz=image_size, epochs=epochs, patience=patience, project=project, **kwargs)
+    def train(self, data_set_file: Path, image_size, batch=8, epochs=300, patience=100, ** kwargs):
+        self.res = self.model.train(data=data_set_file, batch=batch, imgsz=image_size, epochs=epochs, patience=patience, **kwargs)
         return self.res
