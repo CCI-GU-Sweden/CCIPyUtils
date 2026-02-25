@@ -1,4 +1,5 @@
 from threading import Lock
+from ccipy.omero.exceptions.exceptions import OmeroConnectionError
 import omero
 import omero.rtypes
 from omero.gateway import BlitzGateway, CommentAnnotationWrapper, DatasetWrapper, ImageWrapper
@@ -41,6 +42,12 @@ class OmeroConnection:
         CCILogger.info(f"Closing connection to OMERO with token: {self.omero_token}") if self.omero_token is not None else CCILogger.info("Closing connection to OMERO without token")
         if self.conn:
             self.conn.close(hard=hard_close)
+
+    def get_managed_repository(self) -> omero.grid.ManagedRepositoryPrx:  # type: ignore
+        """Get the managed repository proxy from the OMERO connection."""
+        with self._mutex:
+            repo = self.conn.c.getManagedRepository()  # type: ignore
+            return repo
 
     def get_user(self):
         with self._mutex:
@@ -150,19 +157,32 @@ class OmeroConnection:
         project_id = project.getId().getValue()
         return project_id
 
-    def create_and_link_local_attachment(self, attachment_file: str, image_id: int):
-        img = self._get_object("Image", image_id)
-        if img is None:
-            CCILogger.error(f"image with id {image_id} does not exist. No link created")
-            return False
+    def attach_file_to_dataset(self, dataset_id: int, file_path: str, description="", mimetype="text/plain"):
+            dataset = self._get_object("Dataset", dataset_id)
+            if dataset is None:
+                CCILogger.error(f"dataset with id {dataset_id} does not exist")
+                return False
+            file_ann = self.conn.createFileAnnfromLocalFile(
+                file_path,
+                mimetype=mimetype,
+                desc=description
+            )
+            dataset.linkAnnotation(file_ann)
+            return True
 
-        file_ann = self.conn.createFileAnnfromLocalFile(
-                    attachment_file,
-                    mimetype="text/plain",  # Adjust as needed
-                    desc="Optional description"
-                )
-        img.linkAnnotation(file_ann)
-        return True
+    def create_and_link_local_attachment(self, attachment_file: str, image_id: int):
+            img = self._get_object("Image", image_id)
+            if img is None:
+                CCILogger.error(f"image with id {image_id} does not exist. No link created")
+                return False
+
+            file_ann = self.conn.createFileAnnfromLocalFile(
+                        attachment_file,
+                        mimetype="text/plain",  # Adjust as needed
+                        desc="Optional description"
+                    )
+            img.linkAnnotation(file_ann)
+            return True
 
     def create_tag_annotation(self, tag_value):
         with self._mutex:
