@@ -52,6 +52,12 @@ class ImportError(OmeroException):
         super().__init__(filename, message)
         
 
+class OmeroMemoryError(OmeroException):
+    """Exception raised when memory error is generated during import"""
+    def __init__(self, filename=None, message="Memory heap error during import"):
+        super().__init__(filename, message)
+
+
 class OutOfDiskError(OmeroException):
     """Exception raised when temporary storage fails"""
     def __init__(self, filename=None, filepath: str = "", message="No space left on disk!"):
