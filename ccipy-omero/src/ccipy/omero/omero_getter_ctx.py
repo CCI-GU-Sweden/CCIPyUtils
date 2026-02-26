@@ -2,6 +2,7 @@ from pathlib import Path
 import traceback
 from typing import Iterable
 from datetime import datetime
+from omero.rtypes import rstring
 from ccipy.omero.cci_omero_connection import OmeroConnection
 from ccipy.utils.cci_logger import CCILogger
 from omero.gateway import DatasetWrapper, MapAnnotationWrapper, CommentAnnotationWrapper, TagAnnotationWrapper
@@ -243,16 +244,19 @@ class OmeroGetterCtx:
 
         return tags
 
-    def set_rois_on_image(self, image_id: int, shapes: list[Shape]):
+    def set_rois_on_image(self, image_id: int, shapes: list[Shape], name: str = "", description: str = "") -> list[int]:
         us = self.conn.get_update_service()
         ids = []
         image = self.conn.get_image(image_id)
+        roi = RoiI()
+        roi.setDescription(rstring(description))
+        roi.setName(rstring(name))
+        roi.setImage(image._obj)  # pyright: ignore[reportPrivateUsage]
         for shape in shapes:
-            roi = RoiI()
-            roi.setImage(image._obj)  # pyright: ignore[reportPrivateUsage]
             roi.addShape(shape)  # pyright: ignore[reportPrivateUsage]
-            roi_id = us.saveAndReturnObject(roi)
-            ids.append(roi_id.getId().getValue())
+        
+        roi_id = us.saveAndReturnObject(roi)
+        ids.append(roi_id.getId().getValue())
 
         return ids
 
