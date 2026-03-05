@@ -21,6 +21,9 @@ class OmeroConnection:
     def __del__(self):
         self._close_omero_connection()
 
+    def close(self):
+        self._close_omero_connection()
+
     def kill_session(self):
         self._close_omero_connection(True)
 
@@ -158,31 +161,31 @@ class OmeroConnection:
         return project_id
 
     def attach_file_to_dataset(self, dataset_id: int, file_path: str, description="", mimetype="text/plain"):
-            dataset = self._get_object("Dataset", dataset_id)
-            if dataset is None:
-                CCILogger.error(f"dataset with id {dataset_id} does not exist")
-                return False
-            file_ann = self.conn.createFileAnnfromLocalFile(
-                file_path,
-                mimetype=mimetype,
-                desc=description
-            )
-            dataset.linkAnnotation(file_ann)
-            return True
+        dataset = self._get_object("Dataset", dataset_id)
+        if dataset is None:
+            CCILogger.error(f"dataset with id {dataset_id} does not exist")
+            return False
+        file_ann = self.conn.createFileAnnfromLocalFile(
+            file_path,
+            mimetype=mimetype,
+            desc=description
+        )
+        dataset.linkAnnotation(file_ann)
+        return True
 
     def create_and_link_local_attachment(self, attachment_file: str, image_id: int):
-            img = self._get_object("Image", image_id)
-            if img is None:
-                CCILogger.error(f"image with id {image_id} does not exist. No link created")
-                return False
+        img = self._get_object("Image", image_id)
+        if img is None:
+            CCILogger.error(f"image with id {image_id} does not exist. No link created")
+            return False
 
-            file_ann = self.conn.createFileAnnfromLocalFile(
-                        attachment_file,
-                        mimetype="text/plain",  # Adjust as needed
-                        desc="Optional description"
-                    )
-            img.linkAnnotation(file_ann)
-            return True
+        file_ann = self.conn.createFileAnnfromLocalFile(
+                    attachment_file,
+                    mimetype="text/plain",  # Adjust as needed
+                    desc="Optional description"
+                )
+        img.linkAnnotation(file_ann)
+        return True
 
     def create_tag_annotation(self, tag_value):
         with self._mutex:
@@ -190,6 +193,7 @@ class OmeroConnection:
             tag_ann = omero.gateway.TagAnnotationWrapper(self.conn)  # pyright: ignore[reportAttributeAccessIssue]
             tag_ann.setValue(tag_value)
             tag_ann.save()
+            return tag_ann
 
     def set_annotation_on_image(self, image, annotation):
         with self._mutex:

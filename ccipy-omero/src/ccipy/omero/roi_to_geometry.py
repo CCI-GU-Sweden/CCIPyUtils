@@ -11,7 +11,7 @@ def roi_to_geometry(shape: Shape) -> RoiGeometry | None:
     if shape.getTextValue():
         text_value = shape.getTextValue().getValue()
 
-    color = shape.getStrokeColor().val 
+    color = shape.getStrokeColor().val
 
     if isinstance(shape, RectangleI):
         x_coord = shape.getX().getValue()
