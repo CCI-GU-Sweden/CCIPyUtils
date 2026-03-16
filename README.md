@@ -33,6 +33,15 @@ Yeah, you guessed it ;)
 
 * TODO
 
+## Example
+
+ElinPlatelet project - with sanity check:
+conda create -n ElinPlatelet python=3.12 -y
+python -m pip install -e .\ccipy-utils
+python -m pip install -e .\ccipy-omero
+python -m pip install -e .\ccipy-yolo-utils
+python -c "import ccipy.utils, ccipy.omero, ccipy.yolo_utils; print('OK')"
+
 ## Credits
 
 This package was created with [Cookiecutter](https://github.com/audreyfeldroy/cookiecutter) and the [audreyfeldroy/cookiecutter-pypackage](https://github.com/audreyfeldroy/cookiecutter-pypackage) project template.
