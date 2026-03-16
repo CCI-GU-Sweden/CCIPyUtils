@@ -9,6 +9,18 @@ you can change 'main' to any branch/revision/tag etc you want
 
 Each package needs to be installed separately. Use #egg=ccipy-PACKAGE&subdirectory=ccipy-SUBDIR
 
+### Example for local install - editable mode, need a copy of the current repo
+
+ElinPlatelet project as a conda env - with sanity check:
+conda create -n ElinPlatelet python=3.12 -y
+conda activate ElinPlatelet
+python -m pip install -e .\ccipy-utils
+python -m pip install -e .\ccipy-omero
+python -m pip install -e .\ccipy-yolo-utils
+python -c "import ccipy.utils, ccipy.omero, ccipy.yolo_utils; print('OK')"
+
+## Contents
+
 ### ccipy-omero
 Classes and functions for managing OMERO connection and objects
 
@@ -26,21 +38,11 @@ Yeah, you guessed it ;)
 
 ### ccipy-extras
 
-
 * Free software: MIT License
 
 ## Features
 
 * TODO
-
-## Example
-
-ElinPlatelet project - with sanity check:
-conda create -n ElinPlatelet python=3.12 -y
-python -m pip install -e .\ccipy-utils
-python -m pip install -e .\ccipy-omero
-python -m pip install -e .\ccipy-yolo-utils
-python -c "import ccipy.utils, ccipy.omero, ccipy.yolo_utils; print('OK')"
 
 ## Credits
 
